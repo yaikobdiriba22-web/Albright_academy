@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { api } from './lib/api.ts';
+import { api, DEFAULT_SCHOOL_SETTINGS } from './lib/api.ts';
 import {
   SchoolSettings,
   NewsItem,
@@ -63,7 +63,7 @@ function MainApp() {
   const [adminTab, setAdminTab] = useState<string>('dashboard');
 
   // Shared application data
-  const [settings, setSettings] = useState<SchoolSettings | null>(null);
+  const [settings, setSettings] = useState<SchoolSettings>(DEFAULT_SCHOOL_SETTINGS);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [events, setEvents] = useState<SchoolEvent[]>([]);
   const [stats, setStats] = useState<DashboardStats | null>(null);

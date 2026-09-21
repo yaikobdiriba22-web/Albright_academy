@@ -27,6 +27,21 @@ async function startServer() {
   // API router
   app.use('/api', apiRouter);
 
+  // Catch unmatched API requests and return clean JSON (preventing Vite SPA HTML fallback)
+  app.all('/api/*', (req, res) => {
+    res.status(404).json({ error: `API endpoint not found: ${req.method} ${req.originalUrl}` });
+  });
+
+  // Global Express error handler for API routes
+  app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (req.path.startsWith('/api')) {
+      console.error('API Error:', err);
+      res.status(err.status || 500).json({ error: err.message || 'Internal Server Error' });
+      return;
+    }
+    next(err);
+  });
+
   // Vite integration
   if (process.env.NODE_ENV !== 'production') {
     const vite = await createViteServer({
