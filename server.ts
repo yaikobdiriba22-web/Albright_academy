@@ -14,6 +14,11 @@ async function startServer() {
   app.use(express.urlencoded({ extended: true, limit: '20mb' }));
   app.use(cookieParser());
 
+  // Static assets from public folder (accessible as /public/... and root)
+  const publicPath = path.join(process.cwd(), 'public');
+  app.use('/public', express.static(publicPath));
+  app.use(express.static(publicPath));
+
   // Health check
   app.get('/api/health', (req, res) => {
     res.json({
@@ -28,7 +33,7 @@ async function startServer() {
   app.use('/api', apiRouter);
 
   // Catch unmatched API requests and return clean JSON (preventing Vite SPA HTML fallback)
-  app.all('/api/*', (req, res) => {
+  app.all(['/api', '/api/*'], (req, res) => {
     res.status(404).json({ error: `API endpoint not found: ${req.method} ${req.originalUrl}` });
   });
 
