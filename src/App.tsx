@@ -23,6 +23,11 @@ import { GalleryView } from './views/GalleryView.tsx';
 import { NewsView } from './views/NewsView.tsx';
 import { EventsView } from './views/EventsView.tsx';
 import { ContactView } from './views/ContactView.tsx';
+import { TeachersView } from './views/TeachersView.tsx';
+import { FacilitiesView } from './views/FacilitiesView.tsx';
+import { StudentLifeView } from './views/StudentLifeView.tsx';
+import { FAQView } from './views/FAQView.tsx';
+import { PortalsView } from './views/PortalsView.tsx';
 
 // Admin Views
 import { AdminLoginView } from './views/admin/AdminLoginView.tsx';
@@ -34,7 +39,18 @@ import { AdminGalleryView } from './views/admin/AdminGalleryView.tsx';
 import { AdminMessagesView } from './views/admin/AdminMessagesView.tsx';
 import { AdminSettingsView } from './views/admin/AdminSettingsView.tsx';
 
+// i18n Provider
+import { LanguageProvider } from './i18n/LanguageContext.tsx';
+
 export default function App() {
+  return (
+    <LanguageProvider>
+      <MainApp />
+    </LanguageProvider>
+  );
+}
+
+function MainApp() {
   // Current route state
   const [currentRoute, setCurrentRoute] = useState<string>(() => {
     const path = window.location.pathname;
@@ -250,9 +266,24 @@ export default function App() {
     );
   }
 
+  // Check for portal routes
+  const isPortalRoute =
+    currentRoute.startsWith('/parent') ||
+    currentRoute.startsWith('/teacher') ||
+    currentRoute.startsWith('/student') ||
+    currentRoute === '/portals';
+
+  const initialPortalRole = currentRoute.startsWith('/parent')
+    ? 'parent'
+    : currentRoute.startsWith('/teacher')
+    ? 'teacher'
+    : currentRoute.startsWith('/student')
+    ? 'student'
+    : 'parent';
+
   // Render Public Website with Navbar & Footer
   return (
-    <div className="min-h-screen flex flex-col bg-white text-slate-900 selection:bg-amber-400 selection:text-slate-950">
+    <div className="min-h-screen flex flex-col bg-white text-slate-900 selection:bg-amber-400 selection:text-slate-950 font-sans">
       <Navbar
         currentRoute={currentRoute}
         navigate={navigate}
@@ -282,6 +313,15 @@ export default function App() {
         {currentRoute === '/admissions' && (
           <AdmissionsView navigate={navigate} />
         )}
+        {currentRoute === '/teachers' && (
+          <TeachersView navigate={navigate} />
+        )}
+        {currentRoute === '/facilities' && (
+          <FacilitiesView navigate={navigate} />
+        )}
+        {currentRoute === '/student-life' && (
+          <StudentLifeView navigate={navigate} />
+        )}
         {currentRoute === '/gallery' && <GalleryView />}
         {currentRoute === '/news' && (
           <NewsView
@@ -291,7 +331,14 @@ export default function App() {
           />
         )}
         {currentRoute === '/events' && <EventsView events={events} />}
+        {currentRoute === '/faq' && <FAQView navigate={navigate} />}
         {currentRoute === '/contact' && <ContactView settings={settings} />}
+        {isPortalRoute && (
+          <PortalsView
+            initialRole={initialPortalRole as 'parent' | 'teacher' | 'student'}
+            navigate={navigate}
+          />
+        )}
       </main>
 
       <Footer navigate={navigate} settings={settings} />

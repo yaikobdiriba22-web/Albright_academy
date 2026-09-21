@@ -2,8 +2,8 @@
 
 @layer base {
   :root {
-    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    --font-serif: 'Playfair Display', Georgia, serif;
+    --font-sans: 'Plus Jakarta Sans', 'Noto Sans Ethiopic', 'Abyssinica SIL', system-ui, -apple-system, sans-serif;
+    --font-serif: 'Playfair Display', 'Noto Sans Ethiopic', Georgia, serif;
   }
   body {
     font-family: var(--font-sans);
@@ -14,3 +14,4 @@
     font-family: var(--font-serif);
   }
 }
+

@@ -74,8 +74,13 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
             </button>
 
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold shadow-xs">
-                <GraduationCap className="w-5 h-5" />
+              <div className="w-9 h-9 rounded-full bg-white p-0.5 shadow-xs shrink-0 overflow-hidden flex items-center justify-center">
+                <img
+                  src="/logo.png"
+                  alt="Albright Academy Logo"
+                  className="w-full h-full object-contain rounded-full"
+                  referrerPolicy="no-referrer"
+                />
               </div>
               <div>
                 <h1 className="text-base font-bold text-white tracking-tight font-display">

@@ -9,8 +9,12 @@ import {
   Youtube,
   Lock,
   ArrowUpRight,
+  ShieldCheck,
+  Users,
 } from 'lucide-react';
 import { SchoolSettings } from '../../types/index.ts';
+import { useTranslation } from '../../i18n/LanguageContext.tsx';
+import { LanguageSwitcher } from '../ui/LanguageSwitcher.tsx';
 
 interface FooterProps {
   navigate: (route: string) => void;
@@ -18,23 +22,27 @@ interface FooterProps {
 }
 
 export const Footer: React.FC<FooterProps> = ({ navigate, settings }) => {
+  const { d } = useTranslation();
+
   const quickLinks = [
-    { label: 'Home', path: '/' },
-    { label: 'About Our Academy', path: '/about' },
-    { label: 'Academic Programs', path: '/academics' },
-    { label: 'Online Admissions', path: '/admissions' },
-    { label: 'Campus Gallery', path: '/gallery' },
-    { label: 'News & Announcements', path: '/news' },
-    { label: 'Upcoming Events', path: '/events' },
-    { label: 'Contact Us', path: '/contact' },
+    { label: d.nav.home, path: '/' },
+    { label: d.nav.about, path: '/about' },
+    { label: d.nav.academics, path: '/academics' },
+    { label: d.nav.admissions, path: '/admissions' },
+    { label: d.nav.teachers, path: '/teachers' },
+    { label: d.nav.facilities, path: '/facilities' },
+    { label: d.nav.studentLife, path: '/student-life' },
+    { label: d.nav.gallery, path: '/gallery' },
+    { label: d.nav.news, path: '/news' },
+    { label: d.nav.faq, path: '/faq' },
+    { label: d.nav.contact, path: '/contact' },
   ];
 
-  const academicPrograms = [
-    { label: 'Early Years (KG1 – KG3)', path: '/academics' },
-    { label: 'Lower Primary (Grade 1 – 4)', path: '/academics' },
-    { label: 'Upper Primary & Junior (Grade 5 – 8)', path: '/academics' },
-    { label: 'STEM & Robotics Hub', path: '/academics' },
-    { label: 'Holistic Student Development', path: '/about' },
+  const portalLinks = [
+    { label: d.common.parentPortal, path: '/parent/login' },
+    { label: d.common.teacherPortal, path: '/teacher/login' },
+    { label: d.common.studentPortal, path: '/student/login' },
+    { label: d.common.adminPortal, path: '/admin/login' },
   ];
 
   const handleLinkClick = (path: string) => {
@@ -43,29 +51,39 @@ export const Footer: React.FC<FooterProps> = ({ navigate, settings }) => {
   };
 
   return (
-    <footer className="bg-[#0a1529] text-slate-300 border-t border-slate-800">
+    <footer className="bg-[#071324] text-slate-300 border-t border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-12">
-          {/* Column 1: School Identity */}
-          <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8">
+          {/* Column 1: School Identity (5 cols) */}
+          <div className="lg:col-span-5 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-bold shadow-md">
-                <GraduationCap className="w-6 h-6" />
+              <div className="w-13 h-13 rounded-full bg-white p-0.5 shadow-md shrink-0 overflow-hidden flex items-center justify-center">
+                <img
+                  src={settings?.logoUrl || '/logo.png'}
+                  alt="Albright Academy Logo"
+                  className="w-full h-full object-contain rounded-full"
+                  referrerPolicy="no-referrer"
+                />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-white tracking-tight font-display">
-                  {settings?.schoolName || 'Albright Academy'}
+                <h3 className="text-xl sm:text-2xl font-black text-white tracking-tight font-display">
+                  {d.common.schoolName}
                 </h3>
                 <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider">
-                  KG1 – Grade 8
+                  KG1 – Grade 8 • Center of Excellence and Innovation
                 </p>
               </div>
             </div>
-            <p className="text-sm text-slate-300 leading-relaxed">
-              {settings?.slogan || 'Center of Excellence and Innovation'} — Nurturing curious minds,
-              resilient character, and transformative 21st-century leadership from early childhood
-              through junior secondary.
+            <p className="text-sm text-slate-300 leading-relaxed max-w-md">
+              {d.footer.aboutSchool}
             </p>
+
+            {/* Language Switcher in Footer */}
+            <div className="pt-2 flex items-center gap-3">
+              <span className="text-xs text-slate-400 font-medium">Language:</span>
+              <LanguageSwitcher variant="dark" />
+            </div>
+
             {/* Social icons */}
             <div className="pt-2 flex items-center space-x-3">
               <a
@@ -73,7 +91,7 @@ export const Footer: React.FC<FooterProps> = ({ navigate, settings }) => {
                 href={settings?.facebookUrl || 'https://facebook.com'}
                 target="_blank"
                 rel="noreferrer"
-                className="w-9 h-9 rounded-lg bg-slate-800/80 hover:bg-amber-500 hover:text-slate-950 text-slate-300 flex items-center justify-center transition-colors"
+                className="w-9 h-9 rounded-lg bg-slate-800/90 hover:bg-amber-500 hover:text-slate-950 text-slate-300 flex items-center justify-center transition-colors"
                 aria-label="Facebook"
               >
                 <Facebook className="w-4 h-4" />
@@ -83,7 +101,7 @@ export const Footer: React.FC<FooterProps> = ({ navigate, settings }) => {
                 href={settings?.telegramUrl || 'https://t.me'}
                 target="_blank"
                 rel="noreferrer"
-                className="w-9 h-9 rounded-lg bg-slate-800/80 hover:bg-amber-500 hover:text-slate-950 text-slate-300 flex items-center justify-center transition-colors"
+                className="w-9 h-9 rounded-lg bg-slate-800/90 hover:bg-amber-500 hover:text-slate-950 text-slate-300 flex items-center justify-center transition-colors"
                 aria-label="Telegram"
               >
                 <Send className="w-4 h-4" />
@@ -93,7 +111,7 @@ export const Footer: React.FC<FooterProps> = ({ navigate, settings }) => {
                 href={settings?.youtubeUrl || 'https://youtube.com'}
                 target="_blank"
                 rel="noreferrer"
-                className="w-9 h-9 rounded-lg bg-slate-800/80 hover:bg-amber-500 hover:text-slate-950 text-slate-300 flex items-center justify-center transition-colors"
+                className="w-9 h-9 rounded-lg bg-slate-800/90 hover:bg-amber-500 hover:text-slate-950 text-slate-300 flex items-center justify-center transition-colors"
                 aria-label="YouTube"
               >
                 <Youtube className="w-4 h-4" />
@@ -101,14 +119,34 @@ export const Footer: React.FC<FooterProps> = ({ navigate, settings }) => {
             </div>
           </div>
 
-          {/* Column 2: Quick Links */}
-          <div>
+          {/* Column 2: Quick Links (3 cols) */}
+          <div className="lg:col-span-3">
             <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-              Quick Navigation
+              {d.footer.quickLinks}
             </h4>
-            <ul className="space-y-2.5 text-sm">
+            <ul className="grid grid-cols-2 gap-y-2.5 gap-x-2 text-xs sm:text-sm">
               {quickLinks.map((item) => (
+                <li key={item.path}>
+                  <button
+                    onClick={() => handleLinkClick(item.path)}
+                    className="text-slate-400 hover:text-amber-400 transition-colors flex items-center gap-1 cursor-pointer text-left"
+                  >
+                    <span>{item.label}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Column 3: Portals & ERP (2 cols) */}
+          <div className="lg:col-span-2">
+            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+              {d.nav.portals}
+            </h4>
+            <ul className="space-y-2.5 text-xs sm:text-sm">
+              {portalLinks.map((item) => (
                 <li key={item.path}>
                   <button
                     onClick={() => handleLinkClick(item.path)}
@@ -121,61 +159,47 @@ export const Footer: React.FC<FooterProps> = ({ navigate, settings }) => {
             </ul>
           </div>
 
-          {/* Column 3: Academic Programs */}
-          <div>
+          {/* Column 4: Contact Information (2 cols) */}
+          <div className="lg:col-span-2 space-y-3 text-xs sm:text-sm">
             <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-              Programs
+              {d.footer.contactInfo}
             </h4>
-            <ul className="space-y-2.5 text-sm">
-              {academicPrograms.map((item, idx) => (
-                <li key={idx}>
-                  <button
-                    onClick={() => handleLinkClick(item.path)}
-                    className="text-slate-400 hover:text-amber-400 transition-colors flex items-center gap-1.5 cursor-pointer text-left"
-                  >
-                    <span>{item.label}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Column 4: Contact Information */}
-          <div>
-            <h4 className="text-sm font-bold text-white uppercase tracking-wider mb-4 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-amber-400"></span>
-              Get in Touch
-            </h4>
-            <ul className="space-y-3.5 text-sm">
-              <li className="flex items-start gap-3">
-                <MapPin className="w-4 h-4 text-amber-400 shrink-0 mt-1" />
+            <div className="space-y-3">
+              <div className="flex items-start gap-2.5">
+                <MapPin className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                 <span className="text-slate-300">
-                  {settings?.address || 'Bole Sub-City, Addis Ababa, Ethiopia'}
+                  {settings?.address || 'Sheggar city, Gefarsa Gujjee, kella'}
                 </span>
-              </li>
-              <li className="flex items-center gap-3">
+              </div>
+              <div className="flex items-center gap-2.5">
                 <Phone className="w-4 h-4 text-amber-400 shrink-0" />
-                <span className="text-slate-300">
-                  {settings?.phone || '+251 911 234 567'}
-                </span>
-              </li>
-              <li className="flex items-center gap-3">
+                <a
+                  href={`tel:${settings?.phone || '0923014132'}`}
+                  className="text-slate-300 hover:text-white transition-colors"
+                >
+                  {settings?.phone || '0923014132'}
+                </a>
+              </div>
+              <div className="flex items-center gap-2.5">
                 <Mail className="w-4 h-4 text-amber-400 shrink-0" />
-                <span className="text-slate-300">
-                  {settings?.email || 'info@albrightacademy.edu'}
-                </span>
-              </li>
-            </ul>
+                <a
+                  href={`mailto:${settings?.email || 'dinigaatrading@gmail.com'}`}
+                  className="text-slate-300 hover:text-white transition-colors break-all"
+                >
+                  {settings?.email || 'dinigaatrading@gmail.com'}
+                </a>
+              </div>
+            </div>
 
-            <div className="mt-6 pt-5 border-t border-slate-800">
+            <div className="pt-4">
               <button
                 id="footer-admin-link"
                 onClick={() => handleLinkClick('/admin/login')}
-                className="inline-flex items-center gap-2 text-xs font-semibold text-slate-400 hover:text-amber-300 transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-amber-300 transition-colors cursor-pointer"
               >
                 <Lock className="w-3.5 h-3.5" />
-                <span>Authorized Staff & Admin Login</span>
+                <span>Admin Login</span>
                 <ArrowUpRight className="w-3 h-3 opacity-60" />
               </button>
             </div>
@@ -184,7 +208,7 @@ export const Footer: React.FC<FooterProps> = ({ navigate, settings }) => {
 
         {/* Bottom copyright */}
         <div className="mt-14 pt-8 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-4">
-          <p>© 2026 Albright Academy. All rights reserved.</p>
+          <p>© 2026 Albright Academy. {d.footer.allRightsReserved}</p>
           <div className="flex items-center space-x-6">
             <span className="text-slate-400">Excellence • Integrity • Innovation</span>
             <span>Accredited KG1 – Grade 8</span>

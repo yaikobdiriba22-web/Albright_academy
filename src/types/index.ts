@@ -36,6 +36,7 @@ export interface NewsItem {
   id: string;
   title: string;
   slug: string;
+  category?: string;
   summary: string;
   content: string;
   imageUrl: string;
@@ -119,6 +120,15 @@ export interface SchoolSettings {
   principalRole: string;
   principalMessage: string;
   principalPhotoUrl: string;
+  // Moving Announcement Banner / Animation (Created and Managed by Admin)
+  tickerEnabled?: boolean;
+  tickerText?: string;
+  tickerBadge?: string;
+  tickerSubtext?: string;
+  tickerSecondaryText?: string;
+  tickerSpeed?: 'fast' | 'normal' | 'slow';
+  tickerCreatedBy?: string;
+  tickerUpdatedAt?: string;
   updatedAt: string;
 }
 

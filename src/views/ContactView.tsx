@@ -110,7 +110,7 @@ export const ContactView: React.FC<ContactViewProps> = ({ settings }) => {
                 <div>
                   <h4 className="text-sm font-bold text-[#0f2444]">Campus Location</h4>
                   <p className="text-xs sm:text-sm text-slate-600 mt-0.5">
-                    {settings?.address || 'Bole Sub-City, Addis Ababa, Ethiopia'}
+                    {settings?.address || 'Sheggar city, Gefarsa Gujjee, kella'}
                   </p>
                 </div>
               </div>
@@ -122,7 +122,12 @@ export const ContactView: React.FC<ContactViewProps> = ({ settings }) => {
                 <div>
                   <h4 className="text-sm font-bold text-[#0f2444]">Phone Inquiries</h4>
                   <p className="text-xs sm:text-sm text-slate-600 mt-0.5">
-                    {settings?.phone || '+251 911 234 567'}
+                    <a
+                      href={`tel:${settings?.phone || '0923014132'}`}
+                      className="hover:text-amber-600 transition-colors font-semibold"
+                    >
+                      {settings?.phone || '0923014132'}
+                    </a>
                   </p>
                   <span className="text-2xs text-slate-400">Monday – Friday, 8:00 AM – 4:30 PM</span>
                 </div>
@@ -135,7 +140,12 @@ export const ContactView: React.FC<ContactViewProps> = ({ settings }) => {
                 <div>
                   <h4 className="text-sm font-bold text-[#0f2444]">Email Admissions</h4>
                   <p className="text-xs sm:text-sm text-slate-600 mt-0.5">
-                    {settings?.email || 'info@albrightacademy.edu'}
+                    <a
+                      href={`mailto:${settings?.email || 'dinigaatrading@gmail.com'}`}
+                      className="hover:text-emerald-700 transition-colors font-semibold"
+                    >
+                      {settings?.email || 'dinigaatrading@gmail.com'}
+                    </a>
                   </p>
                   <span className="text-2xs text-slate-400">Average response time: &lt; 24 hours</span>
                 </div>
@@ -302,14 +312,14 @@ export const ContactView: React.FC<ContactViewProps> = ({ settings }) => {
                 Campus Location & Directions
               </h3>
               <p className="text-xs text-slate-500">
-                Coordinates: {settings?.latitude?.toFixed(4) || '9.0108'}° N,{' '}
-                {settings?.longitude?.toFixed(4) || '38.7613'}° E •{' '}
-                {settings?.address || 'Bole Sub-City, Addis Ababa, Ethiopia'}
+                Coordinates: {settings?.latitude?.toFixed(4) || '9.0685'}° N,{' '}
+                {settings?.longitude?.toFixed(4) || '38.6521'}° E •{' '}
+                {settings?.address || 'Sheggar city, Gefarsa Gujjee, kella'}
               </p>
             </div>
             <a
               id="google-maps-external-btn"
-              href={settings?.mapsUrl || 'https://maps.google.com/?q=Addis+Ababa+Ethiopia'}
+              href={settings?.mapsUrl || 'https://maps.google.com/?q=Sheggar+city+Gefarsa+Gujjee+kella'}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white border border-slate-300 text-xs font-bold text-slate-800 hover:bg-slate-100 transition-colors shadow-2xs w-fit"
@@ -330,8 +340,8 @@ export const ContactView: React.FC<ContactViewProps> = ({ settings }) => {
               scrolling="no"
               marginHeight={0}
               marginWidth={0}
-              src={`https://maps.google.com/maps?q=${settings?.latitude || 9.010793},${
-                settings?.longitude || 38.761252
+              src={`https://maps.google.com/maps?q=${settings?.latitude || 9.0685},${
+                settings?.longitude || 38.6521
               }&z=14&output=embed`}
               className="w-full h-full border-0"
               loading="lazy"

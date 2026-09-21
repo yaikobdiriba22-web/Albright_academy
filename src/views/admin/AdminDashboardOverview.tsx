@@ -10,6 +10,7 @@ import {
   Users,
   ChevronRight,
   TrendingUp,
+  Sparkles,
 } from 'lucide-react';
 import { DashboardStats, AdmissionApplication, ContactMessage } from '../../types/index.ts';
 import { StatusBadge } from '../../components/ui/StatusBadge.tsx';
@@ -102,6 +103,33 @@ export const AdminDashboardOverview: React.FC<AdminDashboardOverviewProps> = ({
             Review Admissions
           </Button>
         </div>
+      </div>
+
+      {/* Live Moving Announcement Banner Bar (Created by Admin) */}
+      <div className="bg-gradient-to-r from-[#061224] via-[#0d2242] to-[#061224] border border-amber-500/30 rounded-2xl p-4 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md">
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-400/30 flex items-center justify-center shrink-0">
+            <Sparkles className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/40">
+                Active Moving Marquee
+              </span>
+              <span className="text-xs text-slate-300 font-semibold">Created by Admin</span>
+            </div>
+            <p className="text-sm font-bold text-white mt-0.5 font-display line-clamp-1">
+              "Albright Academy — Center of Excellence and Innovation"
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={() => setAdminTab('settings')}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 text-xs font-bold transition-colors cursor-pointer self-start sm:self-center shrink-0 shadow-xs"
+        >
+          <span>Customize in Settings</span>
+          <ChevronRight className="w-3.5 h-3.5" />
+        </button>
       </div>
 
       {/* 5 Key Metric Cards */}

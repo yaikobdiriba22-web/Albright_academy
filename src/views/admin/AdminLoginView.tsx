@@ -48,9 +48,14 @@ export const AdminLoginView: React.FC<AdminLoginViewProps> = ({
         <div className="text-center">
           <button
             onClick={() => navigate('/')}
-            className="inline-flex items-center gap-2 p-3 rounded-2xl bg-[#0f2444] text-amber-400 mb-4 shadow-md cursor-pointer"
+            className="inline-flex items-center gap-2 p-1.5 rounded-full bg-white border border-slate-200 mb-4 shadow-md cursor-pointer hover:scale-105 transition-transform"
           >
-            <GraduationCap className="w-8 h-8" />
+            <img
+              src="/logo.png"
+              alt="Albright Academy Logo"
+              className="w-16 h-16 object-contain rounded-full"
+              referrerPolicy="no-referrer"
+            />
           </button>
           <h2 className="text-3xl font-extrabold text-[#0f2444] font-display">
             Albright Academy

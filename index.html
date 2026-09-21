@@ -3,15 +3,87 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Albright Academy — Center of Excellence and Innovation</title>
-    <meta name="description" content="Albright Academy provides quality education from KG1 through Grade 8, nurturing knowledge, character, creativity, confidence, and lifelong learning." />
-    <meta property="og:title" content="Albright Academy — Center of Excellence and Innovation" />
-    <meta property="og:description" content="Albright Academy provides quality education from KG1 through Grade 8, nurturing knowledge, character, creativity, confidence, and lifelong learning." />
+    <title>Albright Academy | KG1 – Grade 8 — Center of Excellence and Innovation</title>
+    
+    <!-- Favicon & Browser Icons -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="64x64" href="/logo.png" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" href="/logo.png" />
+
+    <meta name="description" content="Albright Academy provides premier education from Kindergarten (KG1) through Junior Secondary (Grade 8) in Sheggar City, Gefarsa Gujjee. Nurturing critical thinking, character, and innovation." />
+    <meta name="keywords" content="Albright Academy, Addis Ababa school, Ethiopian school, KG1 to Grade 8, primary education, junior high school, STEM education Ethiopia" />
+    <meta name="author" content="Albright Academy" />
+    
+    <!-- OpenGraph Social Metadata -->
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Albright Academy" />
+    <meta property="og:title" content="Albright Academy | KG1 – Grade 8 — Center of Excellence and Innovation" />
+    <meta property="og:description" content="Empowering the next generation of leaders and innovators through holistic education, academic excellence, and character formation." />
+    <meta property="og:image" content="https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=1200&q=80" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:locale:alternate" content="am_ET" />
+    <meta property="og:locale:alternate" content="om_ET" />
+
+    <!-- Twitter / X Cards -->
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Albright Academy | KG1 – Grade 8" />
+    <meta name="twitter:description" content="Center of Excellence and Innovation. Providing quality kindergarten, primary, and middle school education." />
+    <meta name="twitter:image" content="https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=1200&q=80" />
+
+    <!-- Typography: Plus Jakarta Sans, Playfair Display, and Noto Sans Ethiopic for Amharic -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=Noto+Sans+Ethiopic:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Schema.org EducationalOrganization / School Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "School",
+      "name": "Albright Academy",
+      "alternateName": ["የአልብራይት አካዳሚ", "Albright Academy Afaan Oromoo"],
+      "description": "Premier independent day school providing quality education from KG1 through Grade 8 in Addis Ababa, Ethiopia.",
+      "url": "https://albrightacademy.edu",
+      "logo": "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=300&q=80",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Bole Sub-City, Next to Millennium Park",
+        "addressLocality": "Addis Ababa",
+        "addressCountry": "ET"
+      },
+      "telephone": "+251 911 234 567",
+      "email": "info@albrightacademy.edu",
+      "openingHours": "Mo-Fr 08:00-16:30",
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Academic Programs",
+        "itemListElement": [
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Course",
+              "name": "Early Childhood Education (KG1 – KG2)"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Course",
+              "name": "Primary Education (Grade 1 – Grade 4)"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Course",
+              "name": "Junior Secondary Education (Grade 5 – Grade 8)"
+            }
+          }
+        ]
+      }
+    }
+    </script>
   </head>
   <body class="bg-slate-50 text-slate-900 antialiased selection:bg-amber-500 selection:text-white">
     <div id="root"></div>

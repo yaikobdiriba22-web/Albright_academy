@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" width="100%" height="100%">
+  <defs>
+    <!-- Path for Top Text: AKKAADAAMII OLBIRAAYITI -->
+    <path id="topTextArc" d="M 65 250 A 185 185 0 0 1 435 250" fill="none" />
+    <!-- Path for Bottom Text: ALBRIGHT ACADEMY -->
+    <path id="bottomTextArc" d="M 435 250 A 185 185 0 0 1 65 250" fill="none" />
+    
+    <linearGradient id="blueGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2563eb" />
+      <stop offset="100%" stop-color="#1d4ed8" />
+    </linearGradient>
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+  </defs>
+
+  <!-- Outer background circle -->
+  <circle cx="250" cy="250" r="240" fill="#ffffff" stroke="#1e5bb5" stroke-width="7" />
+
+  <!-- Outer ring inner border -->
+  <circle cx="250" cy="250" r="172" fill="#ffffff" stroke="#1e5bb5" stroke-width="3.5" />
+
+  <!-- Dots on Left and Right -->
+  <circle cx="95" cy="250" r="8.5" fill="#1e5bb5" />
+  <circle cx="405" cy="250" r="8.5" fill="#1e5bb5" />
+
+  <!-- Curved Text: Top -->
+  <text fill="#1e5bb5" font-family="'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif" font-size="29" font-weight="900" letter-spacing="4">
+    <textPath href="#topTextArc" startOffset="50%" text-anchor="middle">
+      AKKAADAAMII OLBIRAAYITI
+    </textPath>
+  </text>
+
+  <!-- Curved Text: Bottom -->
+  <text fill="#1e5bb5" font-family="'Plus Jakarta Sans', 'Segoe UI', Arial, sans-serif" font-size="33" font-weight="900" letter-spacing="4">
+    <textPath href="#bottomTextArc" startOffset="50%" text-anchor="middle">
+      ALBRIGHT ACADEMY
+    </textPath>
+  </text>
+
+  <!-- Inner Blue Circle -->
+  <circle cx="250" cy="250" r="162" fill="url(#blueGradient)" />
+
+  <!-- Center Graphic: Open Book & Reaching Scholars -->
+  <g id="emblem-center">
+    <!-- Left Golden Scholar Figure -->
+    <!-- Head -->
+    <circle cx="178" cy="235" r="14.5" fill="#f59e0b" />
+    <!-- Body and outstretched arms -->
+    <path d="M 178 250 C 160 252 142 245 132 232 C 140 248 152 262 170 268 C 172 278 184 298 210 320 C 196 295 186 270 178 250 Z" fill="#f59e0b" />
+    <path d="M 178 250 C 185 240 196 228 212 222 C 205 235 198 250 190 266 Z" fill="#f59e0b" />
+
+    <!-- Center/Right White Scholar Figure -->
+    <!-- Head -->
+    <circle cx="242" cy="210" r="16" fill="#ffffff" />
+    <!-- Upper Body and jubilant V-arms -->
+    <path d="M 224 176 C 228 200 234 218 242 228 C 250 218 266 198 274 186 C 265 204 258 220 252 236 C 258 250 266 275 272 305 C 255 285 244 260 240 236 C 235 260 226 288 215 315 C 220 285 226 260 232 236 C 228 222 222 202 216 182 Z" fill="#ffffff" />
+
+    <!-- Dynamic Open Book Pages -->
+    <!-- Gold curved top page accent ribbon -->
+    <path d="M 224 315 C 255 285 295 238 360 192 C 340 205 290 242 250 270 C 238 285 230 300 224 315 Z" fill="#f59e0b" />
+    
+    <!-- White Primary Book Page 1 (Top) -->
+    <path d="M 224 318 C 250 290 286 244 345 208 C 352 230 354 246 348 256 C 298 282 258 312 224 322 Z" fill="#ffffff" />
+
+    <!-- White Page Layer 2 -->
+    <path d="M 224 325 C 255 305 292 270 338 252 C 342 264 340 274 332 284 C 290 306 254 328 224 330 Z" fill="#ffffff" stroke="#2563eb" stroke-width="2.5" />
+
+    <!-- White Page Layer 3 (Bottom) -->
+    <path d="M 224 332 C 252 316 286 288 322 278 C 324 286 320 294 314 302 C 280 320 248 335 224 336 Z" fill="#ffffff" stroke="#2563eb" stroke-width="2.5" />
+
+    <!-- Center spine curve accent -->
+    <path d="M 220 318 Q 224 326 224 338 Q 220 330 220 318 Z" fill="#ffffff" />
+  </g>
+</svg>

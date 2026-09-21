@@ -573,7 +573,7 @@ export const AdmissionsView: React.FC<AdmissionsViewProps> = ({ navigate }) => {
                       id="guardian-phone"
                       value={formData.guardianPhone}
                       onChange={(e) => setFormData({ ...formData, guardianPhone: e.target.value })}
-                      placeholder="e.g. +251 911 234 567"
+                      placeholder="e.g. 0923014132 or +251 923 014 132"
                       className={`w-full px-3.5 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2 ${
                         errors.guardianPhone
                           ? 'border-rose-300 focus:ring-rose-500 has-error'
@@ -621,7 +621,7 @@ export const AdmissionsView: React.FC<AdmissionsViewProps> = ({ navigate }) => {
                       id="guardian-address"
                       value={formData.address}
                       onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                      placeholder="e.g. Bole Sub-City, Woreda 03, House 412, Addis Ababa"
+                      placeholder="e.g. Sheggar City, Gefarsa Gujjee, House 412"
                       className={`w-full px-3.5 py-2.5 rounded-lg border text-sm focus:outline-none focus:ring-2 ${
                         errors.address
                           ? 'border-rose-300 focus:ring-rose-500 has-error'

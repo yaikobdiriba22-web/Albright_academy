@@ -1,0 +1,297 @@
+export type Language = 'en' | 'am' | 'om';
+
+export interface LanguageOption {
+  code: Language;
+  name: string;
+  shortLabel: string;
+  nativeName: string;
+}
+
+export const SUPPORTED_LANGUAGES: LanguageOption[] = [
+  { code: 'en', name: 'English', shortLabel: 'EN', nativeName: 'English' },
+  { code: 'am', name: 'Amharic', shortLabel: 'አማ', nativeName: 'አማርኛ' },
+  { code: 'om', name: 'Afaan Oromo', shortLabel: 'Oromoo', nativeName: 'Afaan Oromoo' },
+];
+
+export interface TranslationDictionary {
+  common: {
+    schoolName: string;
+    schoolTagline: string;
+    applyNow: string;
+    learnMore: string;
+    contactUs: string;
+    exploreSchool: string;
+    viewAll: string;
+    readMore: string;
+    submit: string;
+    submitting: string;
+    close: string;
+    cancel: string;
+    loading: string;
+    error: string;
+    success: string;
+    search: string;
+    filter: string;
+    all: string;
+    back: string;
+    share: string;
+    download: string;
+    print: string;
+    parentPortal: string;
+    teacherPortal: string;
+    studentPortal: string;
+    adminPortal: string;
+    admissionsOpenBadge: string;
+  };
+  nav: {
+    home: string;
+    about: string;
+    academics: string;
+    admissions: string;
+    teachers: string;
+    facilities: string;
+    studentLife: string;
+    gallery: string;
+    news: string;
+    events: string;
+    faq: string;
+    contact: string;
+    portals: string;
+  };
+  hero: {
+    headline: string;
+    headlineHighlight: string;
+    supportingText: string;
+    statGrades: string;
+    statGradesLabel: string;
+    statRatio: string;
+    statRatioLabel: string;
+    statExcellence: string;
+    statExcellenceLabel: string;
+    floatingBadgeTitle: string;
+    floatingBadgeDesc: string;
+  };
+  home: {
+    introHeading: string;
+    introSubheading: string;
+    introText: string;
+    whyChooseTitle: string;
+    whyChooseSubtitle: string;
+    programsTitle: string;
+    programsSubtitle: string;
+    studentLifeTitle: string;
+    studentLifeSubtitle: string;
+    facilitiesTitle: string;
+    facilitiesSubtitle: string;
+    newsTitle: string;
+    newsSubtitle: string;
+    testimonialsTitle: string;
+    testimonialsSubtitle: string;
+    ctaHeading: string;
+    ctaSubtitle: string;
+  };
+  about: {
+    title: string;
+    subtitle: string;
+    overviewHeading: string;
+    overviewText1: string;
+    overviewText2: string;
+    visionTitle: string;
+    visionText: string;
+    missionTitle: string;
+    missionText: string;
+    valuesTitle: string;
+    valuesSubtitle: string;
+    philosophyTitle: string;
+    philosophySubtitle: string;
+    philosophyText: string;
+    historyTitle: string;
+    historySubtitle: string;
+    historyText: string;
+    principalTitle: string;
+    principalSubtitle: string;
+    principalName: string;
+    principalRole: string;
+    principalMessage: string;
+  };
+  academics: {
+    title: string;
+    subtitle: string;
+    earlyTitle: string;
+    earlySubtitle: string;
+    primaryTitle: string;
+    primarySubtitle: string;
+    juniorTitle: string;
+    juniorSubtitle: string;
+    descLabel: string;
+    objectivesLabel: string;
+    subjectsLabel: string;
+    activitiesLabel: string;
+    skillsLabel: string;
+    stemTitle: string;
+    stemDesc: string;
+  };
+  admissions: {
+    title: string;
+    subtitle: string;
+    stepsTitle: string;
+    formTitle: string;
+    formSubtitle: string;
+    studentInfoSection: string;
+    guardianInfoSection: string;
+    documentsSection: string;
+    firstNameLabel: string;
+    middleNameLabel: string;
+    lastNameLabel: string;
+    dobLabel: string;
+    genderLabel: string;
+    genderMale: string;
+    genderFemale: string;
+    applyingGradeLabel: string;
+    previousSchoolLabel: string;
+    guardianNameLabel: string;
+    guardianPhoneLabel: string;
+    guardianEmailLabel: string;
+    addressLabel: string;
+    emergencyContactLabel: string;
+    additionalInfoLabel: string;
+    birthCertLabel: string;
+    reportCardLabel: string;
+    photoLabel: string;
+    uploadInstructions: string;
+    agreeTerms: string;
+    submitApplicationBtn: string;
+    successTitle: string;
+    successMessage: string;
+    refNumberLabel: string;
+    saveRefNotice: string;
+  };
+  teachers: {
+    title: string;
+    subtitle: string;
+    allDepartments: string;
+    earlyYearsDept: string;
+    primaryDept: string;
+    juniorDept: string;
+    stemDept: string;
+    qualificationLabel: string;
+    specializationLabel: string;
+    experienceLabel: string;
+  };
+  facilities: {
+    title: string;
+    subtitle: string;
+    classroomsTitle: string;
+    classroomsDesc: string;
+    libraryTitle: string;
+    libraryDesc: string;
+    computerLabTitle: string;
+    computerLabDesc: string;
+    scienceLabTitle: string;
+    scienceLabDesc: string;
+    playgroundTitle: string;
+    playgroundDesc: string;
+    activityTitle: string;
+    activityDesc: string;
+    cafeteriaTitle: string;
+    cafeteriaDesc: string;
+    transportTitle: string;
+    transportDesc: string;
+  };
+  studentLife: {
+    title: string;
+    subtitle: string;
+    sportsTitle: string;
+    sportsDesc: string;
+    clubsTitle: string;
+    clubsDesc: string;
+    artsTitle: string;
+    artsDesc: string;
+    competitionsTitle: string;
+    competitionsDesc: string;
+    tripsTitle: string;
+    tripsDesc: string;
+    projectsTitle: string;
+    projectsDesc: string;
+    cultureTitle: string;
+    cultureDesc: string;
+  };
+  gallery: {
+    title: string;
+    subtitle: string;
+    catAll: string;
+    catSchool: string;
+    catStudents: string;
+    catTeachers: string;
+    catEvents: string;
+    catSports: string;
+    catActivities: string;
+  };
+  news: {
+    title: string;
+    subtitle: string;
+    searchPlaceholder: string;
+    readArticleBtn: string;
+    latestAnnouncements: string;
+    publishedOn: string;
+  };
+  events: {
+    title: string;
+    subtitle: string;
+    upcomingTab: string;
+    pastTab: string;
+    timeLabel: string;
+    locationLabel: string;
+  };
+  faq: {
+    title: string;
+    subtitle: string;
+    searchPlaceholder: string;
+    allCategories: string;
+    admissionsCat: string;
+    academicsCat: string;
+    campusCat: string;
+    stillHaveQuestions: string;
+    contactSupportText: string;
+  };
+  contact: {
+    title: string;
+    subtitle: string;
+    locationTitle: string;
+    phoneTitle: string;
+    emailTitle: string;
+    hoursTitle: string;
+    hoursValue: string;
+    formTitle: string;
+    formSubtitle: string;
+    nameLabel: string;
+    emailLabel: string;
+    phoneLabel: string;
+    subjectLabel: string;
+    messageLabel: string;
+    sendMessageBtn: string;
+    successMessage: string;
+  };
+  portals: {
+    parentTitle: string;
+    teacherTitle: string;
+    studentTitle: string;
+    loginHeadline: string;
+    loginSubheadline: string;
+    idPlaceholder: string;
+    passwordPlaceholder: string;
+    loginBtn: string;
+    demoNote: string;
+    useDemoAccount: string;
+    erpNotice: string;
+  };
+  footer: {
+    aboutSchool: string;
+    quickLinks: string;
+    academicLevels: string;
+    contactInfo: string;
+    allRightsReserved: string;
+    privacyPolicy: string;
+    termsOfService: string;
+  };
+}
