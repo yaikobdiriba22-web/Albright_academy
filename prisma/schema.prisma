@@ -1,0 +1,115 @@
+// Prisma Schema for Albright Academy
+// Center of Excellence and Innovation (KG1 - Grade 8)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model AdmissionApplication {
+  id                    String   @id @default(uuid())
+  referenceNumber       String   @unique
+  firstName             String
+  middleName            String?
+  lastName              String
+  dateOfBirth           String
+  gender                String
+  applyingGrade         String
+  previousSchool        String?
+  guardianName          String
+  guardianPhone         String
+  guardianEmail         String
+  address               String
+  emergencyContact      String
+  additionalInformation String?
+  status                String   @default("New") // "New" | "Reviewing" | "Accepted" | "Rejected"
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+model News {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  summary     String
+  content     String
+  imageUrl    String
+  author      String   @default("School Administration")
+  status      String   @default("Published") // "Draft" | "Published"
+  publishedAt DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Event {
+  id          String   @id @default(uuid())
+  title       String
+  slug        String   @unique
+  description String
+  date        String
+  startTime   String
+  endTime     String
+  location    String
+  imageUrl    String?
+  status      String   @default("Upcoming") // "Upcoming" | "Completed" | "Cancelled"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model GalleryImage {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  imageUrl    String
+  category    String   // "School" | "Classrooms" | "Students" | "Events" | "Sports" | "Activities"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ContactMessage {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SchoolSettings {
+  id                 String   @id @default("default")
+  schoolName         String   @default("Albright Academy")
+  slogan             String   @default("Center of Excellence and Innovation")
+  logoUrl            String   @default("/images/logo.png")
+  phone              String   @default("+251 911 234 567")
+  email              String   @default("info@albrightacademy.edu")
+  address            String   @default("Bole Sub-City, Addis Ababa, Ethiopia")
+  mapsUrl            String   @default("https://maps.google.com")
+  latitude           Float    @default(9.010793)
+  longitude          Float    @default(38.761252)
+  facebookUrl        String   @default("https://facebook.com/albrightacademy")
+  telegramUrl        String   @default("https://t.me/albrightacademy")
+  youtubeUrl         String   @default("https://youtube.com/@albrightacademy")
+  mission            String
+  vision             String
+  about              String
+  principalName      String   @default("Dr. Helen Mengistu")
+  principalMessage   String
+  principalPhotoUrl  String   @default("https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80")
+  updatedAt          DateTime @updatedAt
+}

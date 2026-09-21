@@ -1,0 +1,6 @@
+{
+  "name": "Albright Academy",
+  "description": "Albright Academy - Center of Excellence and Innovation (KG1 to Grade 8). Quality education nurturing knowledge, character, creativity, and lifelong learning.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
