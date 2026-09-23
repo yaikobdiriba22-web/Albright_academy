@@ -10,7 +10,7 @@ export interface LanguageOption {
 export const SUPPORTED_LANGUAGES: LanguageOption[] = [
   { code: 'en', name: 'English', shortLabel: 'EN', nativeName: 'English' },
   { code: 'am', name: 'Amharic', shortLabel: 'አማ', nativeName: 'አማርኛ' },
-  { code: 'om', name: 'Afaan Oromo', shortLabel: 'Oromoo', nativeName: 'Afaan Oromoo' },
+  { code: 'om', name: 'Afaan Oromo', shortLabel: 'Afaan Oromoo', nativeName: 'Afaan Oromoo' },
 ];
 
 export interface TranslationDictionary {
@@ -156,6 +156,7 @@ export interface TranslationDictionary {
     applyingGradeLabel: string;
     previousSchoolLabel: string;
     guardianNameLabel: string;
+    relationshipLabel?: string;
     guardianPhoneLabel: string;
     guardianEmailLabel: string;
     addressLabel: string;
@@ -293,6 +294,31 @@ export interface TranslationDictionary {
     demoNote: string;
     useDemoAccount: string;
     erpNotice: string;
+  };
+  adminAuth?: {
+    portalTitle: string;
+    adminLogin: string;
+    portalSubtitle: string;
+    emailOrUsername: string;
+    emailOrUsernamePlaceholder: string;
+    password: string;
+    passwordPlaceholder: string;
+    showPassword: string;
+    hidePassword: string;
+    rememberMe: string;
+    loginButton: string;
+    loggingIn: string;
+    forgotPassword: string;
+    forgotPasswordTitle: string;
+    forgotPasswordDesc: string;
+    emailRequiredError: string;
+    passwordRequiredError: string;
+    authFailedError: string;
+    backToHome: string;
+    alreadyLoggedInTitle: string;
+    alreadyLoggedInDesc: string;
+    goToDashboard: string;
+    logout: string;
   };
   footer: {
     aboutSchool: string;

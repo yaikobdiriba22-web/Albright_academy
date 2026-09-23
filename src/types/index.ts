@@ -1,5 +1,39 @@
 // Albright Academy Shared Types
 
+export type UserRole = 'TEACHER' | 'PARENT' | 'STUDENT' | 'ADMIN';
+
+export interface PortalUser {
+  id: string;
+  fullName: string;
+  username: string; // unique, e.g. "teacher.alem" or "parent.dawit"
+  email?: string;
+  role: UserRole;
+  status: 'ACTIVE' | 'SUSPENDED';
+  createdAt: string;
+  updatedAt?: string;
+  // Role-specific fields
+  // For Teacher:
+  employeeId?: string;
+  phone?: string;
+  assignedGrades?: string[]; // e.g. ["Grade 3", "Grade 4"]
+  subjects?: string[]; // e.g. ["Mathematics", "Science"]
+  // For Parent:
+  studentName?: string;
+  studentReference?: string;
+  studentGrade?: string;
+  relationship?: string; // "Father" | "Mother" | "Guardian"
+  address?: string;
+  // For Student:
+  enrolledGrade?: string;
+  section?: string;
+  guardianName?: string;
+  guardianPhone?: string;
+  gender?: 'Male' | 'Female' | string;
+  dateOfBirth?: string;
+  // Optional credential hint for administrative issuance slip
+  plainPasswordHint?: string;
+}
+
 export interface AdminUser {
   id: string;
   name: string;
@@ -20,6 +54,7 @@ export interface AdmissionApplication {
   applyingGrade: string; // e.g. "KG1", "KG2", "KG3", "Grade 1" ... "Grade 8"
   previousSchool?: string;
   guardianName: string;
+  guardianRelationship?: string;
   guardianPhone: string;
   guardianEmail: string;
   address: string;

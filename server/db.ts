@@ -9,13 +9,23 @@ import {
   GalleryImage,
   ContactMessage,
   SchoolSettings,
+  PortalUser,
 } from '../src/types/index.ts';
 
-const DATA_DIR = path.join(process.cwd(), 'data');
-const DB_FILE = path.join(DATA_DIR, 'database.json');
+function resolveDataDir(): string {
+  // If running in Vercel or AWS Lambda serverless function environment
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    return path.join('/tmp', 'albright_data');
+  }
+  return path.join(process.cwd(), 'data');
+}
+
+let activeDataDir = resolveDataDir();
+let activeDbFile = path.join(activeDataDir, 'database.json');
 
 export interface DatabaseSchema {
   admins: (AdminUser & { passwordHash: string })[];
+  portalUsers: (PortalUser & { passwordHash: string })[];
   applications: AdmissionApplication[];
   news: NewsItem[];
   events: SchoolEvent[];
@@ -64,6 +74,9 @@ const DEFAULT_SETTINGS: SchoolSettings = {
 function getInitialData(): DatabaseSchema {
   const salt = bcrypt.genSaltSync(10);
   const adminPasswordHash = bcrypt.hashSync('ChangeMe123!', salt);
+  const teacherPasswordHash = bcrypt.hashSync('Teacher123!', salt);
+  const parentPasswordHash = bcrypt.hashSync('Parent123!', salt);
+  const studentPasswordHash = bcrypt.hashSync('Student123!', salt);
 
   return {
     admins: [
@@ -73,6 +86,58 @@ function getInitialData(): DatabaseSchema {
         email: 'admin@albrightacademy.local',
         passwordHash: adminPasswordHash,
         createdAt: '2026-01-01T00:00:00.000Z',
+      },
+    ],
+    portalUsers: [
+      {
+        id: 'usr-teacher-1',
+        fullName: 'Teacher Alemayehu Tadesse',
+        username: 'teacher.alem',
+        email: 'alemayehu.t@albrightacademy.edu',
+        role: 'TEACHER',
+        status: 'ACTIVE',
+        employeeId: 'EMP-T-2024-012',
+        phone: '0911223344',
+        assignedGrades: ['Grade 3', 'Grade 4'],
+        subjects: ['Mathematics', 'Science'],
+        plainPasswordHint: 'Teacher123!',
+        passwordHash: teacherPasswordHash,
+        createdAt: '2026-01-10T08:30:00.000Z',
+      },
+      {
+        id: 'usr-parent-1',
+        fullName: 'Dawit Bekele',
+        username: 'parent.dawit',
+        email: 'dawit.bekele@gmail.com',
+        role: 'PARENT',
+        status: 'ACTIVE',
+        phone: '0922334455',
+        studentName: 'Abebe Dawit',
+        studentReference: 'ALB-2026-0001',
+        studentGrade: 'Grade 4B',
+        relationship: 'Father',
+        address: 'Sheggar City, Gefarsa Gujjee, Zone 3',
+        plainPasswordHint: 'Parent123!',
+        passwordHash: parentPasswordHash,
+        createdAt: '2026-01-12T09:15:00.000Z',
+      },
+      {
+        id: 'usr-student-1',
+        fullName: 'Abebe Dawit',
+        username: 'student.abebe',
+        email: 'abebe.dawit@albright.student',
+        role: 'STUDENT',
+        status: 'ACTIVE',
+        studentReference: 'ALB-2026-0001',
+        enrolledGrade: 'Grade 4',
+        section: 'B',
+        guardianName: 'Dawit Bekele',
+        guardianPhone: '0922334455',
+        gender: 'Male',
+        dateOfBirth: '2016-04-12',
+        plainPasswordHint: 'Student123!',
+        passwordHash: studentPasswordHash,
+        createdAt: '2026-01-14T10:00:00.000Z',
       },
     ],
     applications: [
@@ -337,32 +402,85 @@ Every class has designated weekly library discovery hours supervised by certifie
 
 // Database Helper functions
 export function getDb(): DatabaseSchema {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-
-  if (!fs.existsSync(DB_FILE)) {
-    const initialData = getInitialData();
-    fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2), 'utf-8');
-    return initialData;
-  }
-
   try {
-    const raw = fs.readFileSync(DB_FILE, 'utf-8');
-    return JSON.parse(raw) as DatabaseSchema;
-  } catch (err) {
-    console.error('Error reading database file, re-initializing:', err);
-    const initialData = getInitialData();
-    fs.writeFileSync(DB_FILE, JSON.stringify(initialData, null, 2), 'utf-8');
-    return initialData;
+    if (!fs.existsSync(activeDataDir)) {
+      fs.mkdirSync(activeDataDir, { recursive: true });
+    }
+
+    if (!fs.existsSync(activeDbFile)) {
+      // Check if original seed data exists in project folder
+      const seedFile = path.join(process.cwd(), 'data', 'database.json');
+      if (fs.existsSync(seedFile)) {
+        try {
+          const rawSeed = fs.readFileSync(seedFile, 'utf-8');
+          const parsedSeed = JSON.parse(rawSeed) as DatabaseSchema;
+          try {
+            fs.writeFileSync(activeDbFile, JSON.stringify(parsedSeed, null, 2), 'utf-8');
+          } catch {
+            // Read-only filesystem, use in memory/seed
+          }
+          return parsedSeed;
+        } catch {
+          // fallback to getInitialData
+        }
+      }
+      const initialData = getInitialData();
+      try {
+        fs.writeFileSync(activeDbFile, JSON.stringify(initialData, null, 2), 'utf-8');
+      } catch {
+        // Read-only filesystem
+      }
+      return initialData;
+    }
+
+    const raw = fs.readFileSync(activeDbFile, 'utf-8');
+    const data = JSON.parse(raw) as DatabaseSchema;
+    if (!data.portalUsers || !Array.isArray(data.portalUsers)) {
+      data.portalUsers = getInitialData().portalUsers;
+      saveDb(data);
+    } else if (!data.portalUsers.some((u) => u.role === 'STUDENT')) {
+      const defaultStudent = getInitialData().portalUsers.find((u) => u.role === 'STUDENT');
+      if (defaultStudent) {
+        data.portalUsers.push(defaultStudent);
+        saveDb(data);
+      }
+    }
+    return data;
+  } catch (err: any) {
+    // If permission or EROFS error, fallback to /tmp
+    if (activeDataDir !== path.join('/tmp', 'albright_data')) {
+      activeDataDir = path.join('/tmp', 'albright_data');
+      activeDbFile = path.join(activeDataDir, 'database.json');
+      return getDb();
+    }
+    console.error('Error reading database file, returning default data:', err);
+    return getInitialData();
   }
 }
 
 export function saveDb(data: DatabaseSchema): void {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+  try {
+    if (!fs.existsSync(activeDataDir)) {
+      fs.mkdirSync(activeDataDir, { recursive: true });
+    }
+    fs.writeFileSync(activeDbFile, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (err: any) {
+    // If writing failed due to read-only filesystem, switch to /tmp
+    if (activeDataDir !== path.join('/tmp', 'albright_data')) {
+      activeDataDir = path.join('/tmp', 'albright_data');
+      activeDbFile = path.join(activeDataDir, 'database.json');
+      try {
+        if (!fs.existsSync(activeDataDir)) {
+          fs.mkdirSync(activeDataDir, { recursive: true });
+        }
+        fs.writeFileSync(activeDbFile, JSON.stringify(data, null, 2), 'utf-8');
+      } catch (innerErr) {
+        console.warn('Unable to persist to disk in serverless environment:', innerErr);
+      }
+    } else {
+      console.warn('Unable to persist database:', err);
+    }
   }
-  fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
 }
 
 // Reference generator e.g. ALB-2026-0004

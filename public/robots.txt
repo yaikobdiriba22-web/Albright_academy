@@ -1,0 +1,8 @@
+# Robots.txt for Albright Academy (KG1 - Grade 8)
+# Center of Excellence and Innovation
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+Sitemap: https://albrightacademykg-g8.vercel.app/sitemap.xml

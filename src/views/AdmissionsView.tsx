@@ -17,12 +17,15 @@ import { api } from '../lib/api.ts';
 import { AdmissionApplication } from '../types/index.ts';
 import { Button } from '../components/ui/Button.tsx';
 import { SectionHeader } from '../components/ui/SectionHeader.tsx';
+import { useTranslation } from '../i18n/LanguageContext.tsx';
 
 interface AdmissionsViewProps {
   navigate: (route: string) => void;
 }
 
 export const AdmissionsView: React.FC<AdmissionsViewProps> = ({ navigate }) => {
+  const { d, language } = useTranslation();
+
   // Form State
   const [formData, setFormData] = useState({
     firstName: '',
@@ -33,12 +36,19 @@ export const AdmissionsView: React.FC<AdmissionsViewProps> = ({ navigate }) => {
     applyingGrade: 'KG1',
     previousSchool: '',
     guardianName: '',
+    guardianRelationship: 'Mother',
     guardianPhone: '',
     guardianEmail: '',
     address: '',
     emergencyContact: '',
     additionalInformation: '',
   });
+
+  const [uploadedFiles, setUploadedFiles] = useState<{
+    birthCert?: string;
+    reportCard?: string;
+    photo?: string;
+  }>({});
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -128,6 +138,7 @@ export const AdmissionsView: React.FC<AdmissionsViewProps> = ({ navigate }) => {
         applyingGrade: 'KG1',
         previousSchool: '',
         guardianName: '',
+        guardianRelationship: 'Mother',
         guardianPhone: '',
         guardianEmail: '',
         address: '',
@@ -540,10 +551,10 @@ export const AdmissionsView: React.FC<AdmissionsViewProps> = ({ navigate }) => {
                 <h4 className="text-base font-bold text-[#0f2444] uppercase tracking-wider border-b border-slate-100 pb-2 mb-4">
                   2. Parent / Guardian Contact Details
                 </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Full Guardian Name *
+                      {d.admissions.guardianNameLabel} *
                     </label>
                     <input
                       type="text"
@@ -566,7 +577,26 @@ export const AdmissionsView: React.FC<AdmissionsViewProps> = ({ navigate }) => {
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Guardian Phone *
+                      {d.admissions.relationshipLabel || 'Relationship to Student'} *
+                    </label>
+                    <select
+                      id="guardian-relationship"
+                      value={formData.guardianRelationship}
+                      onChange={(e) =>
+                        setFormData({ ...formData, guardianRelationship: e.target.value })
+                      }
+                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2444] bg-white"
+                    >
+                      <option value="Mother">Mother / እናት / Haadha</option>
+                      <option value="Father">Father / አባት / Abbaa</option>
+                      <option value="Legal Guardian">Legal Guardian / ህጋዊ አሳዳጊ / Guddiftuu</option>
+                      <option value="Other">Other Relative / ሌላ / Kan Biraa</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">
+                      {d.admissions.guardianPhoneLabel} *
                     </label>
                     <input
                       type="tel"
@@ -589,7 +619,7 @@ export const AdmissionsView: React.FC<AdmissionsViewProps> = ({ navigate }) => {
 
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">
-                      Guardian Email Address *
+                      {d.admissions.guardianEmailLabel} *
                     </label>
                     <input
                       type="email"
@@ -662,10 +692,85 @@ export const AdmissionsView: React.FC<AdmissionsViewProps> = ({ navigate }) => {
                 </div>
               </div>
 
-              {/* Section 3: Additional Information */}
+              {/* Section 3: Supporting Documents (Optional at time of application) */}
               <div>
                 <h4 className="text-base font-bold text-[#0f2444] uppercase tracking-wider border-b border-slate-100 pb-2 mb-4">
-                  3. Additional Information (Optional)
+                  {d.admissions.documentsSection || '3. Supporting Documents (Upload Architecture)'}
+                </h4>
+                <p className="text-xs text-slate-500 mb-4">
+                  {d.admissions.uploadInstructions ||
+                    'You may optionally upload copies of student documents now or provide them during the campus assessment.'}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="p-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100/80 transition-colors text-center">
+                    <span className="block text-xs font-semibold text-slate-700 mb-2">
+                      {d.admissions.birthCertLabel || 'Birth Certificate'}
+                    </span>
+                    <input
+                      type="file"
+                      id="upload-birth-cert"
+                      accept=".pdf,.png,.jpg,.jpeg"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setUploadedFiles((prev) => ({ ...prev, birthCert: file.name }));
+                        }
+                      }}
+                      className="text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200 cursor-pointer w-full"
+                    />
+                    {uploadedFiles.birthCert && (
+                      <p className="text-xs text-emerald-600 mt-2 font-medium">✓ {uploadedFiles.birthCert}</p>
+                    )}
+                  </div>
+
+                  <div className="p-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100/80 transition-colors text-center">
+                    <span className="block text-xs font-semibold text-slate-700 mb-2">
+                      {d.admissions.reportCardLabel || 'Previous Report Card'}
+                    </span>
+                    <input
+                      type="file"
+                      id="upload-report-card"
+                      accept=".pdf,.png,.jpg,.jpeg"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setUploadedFiles((prev) => ({ ...prev, reportCard: file.name }));
+                        }
+                      }}
+                      className="text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200 cursor-pointer w-full"
+                    />
+                    {uploadedFiles.reportCard && (
+                      <p className="text-xs text-emerald-600 mt-2 font-medium">✓ {uploadedFiles.reportCard}</p>
+                    )}
+                  </div>
+
+                  <div className="p-4 rounded-xl border border-dashed border-slate-300 bg-slate-50 hover:bg-slate-100/80 transition-colors text-center">
+                    <span className="block text-xs font-semibold text-slate-700 mb-2">
+                      {d.admissions.photoLabel || 'Recent Passport Photo'}
+                    </span>
+                    <input
+                      type="file"
+                      id="upload-photo"
+                      accept=".png,.jpg,.jpeg"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setUploadedFiles((prev) => ({ ...prev, photo: file.name }));
+                        }
+                      }}
+                      className="text-xs text-slate-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200 cursor-pointer w-full"
+                    />
+                    {uploadedFiles.photo && (
+                      <p className="text-xs text-emerald-600 mt-2 font-medium">✓ {uploadedFiles.photo}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 4: Additional Information */}
+              <div>
+                <h4 className="text-base font-bold text-[#0f2444] uppercase tracking-wider border-b border-slate-100 pb-2 mb-4">
+                  4. {d.admissions.additionalInfoLabel || 'Additional Information (Optional)'}
                 </h4>
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">

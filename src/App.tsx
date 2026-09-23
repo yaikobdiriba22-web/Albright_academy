@@ -28,6 +28,7 @@ import { FacilitiesView } from './views/FacilitiesView.tsx';
 import { StudentLifeView } from './views/StudentLifeView.tsx';
 import { FAQView } from './views/FAQView.tsx';
 import { PortalsView } from './views/PortalsView.tsx';
+import { NotFoundView } from './views/NotFoundView.tsx';
 
 // Admin Views
 import { AdminLoginView } from './views/admin/AdminLoginView.tsx';
@@ -38,6 +39,10 @@ import { AdminEventsView } from './views/admin/AdminEventsView.tsx';
 import { AdminGalleryView } from './views/admin/AdminGalleryView.tsx';
 import { AdminMessagesView } from './views/admin/AdminMessagesView.tsx';
 import { AdminSettingsView } from './views/admin/AdminSettingsView.tsx';
+import { AdminUsersView } from './views/admin/AdminUsersView.tsx';
+
+// Gemini Multi-turn Chatbot
+import { GeminiChatbot } from './components/chat/GeminiChatbot.tsx';
 
 // i18n Provider
 import { LanguageProvider } from './i18n/LanguageContext.tsx';
@@ -50,11 +55,16 @@ export default function App() {
   );
 }
 
+function normalizePath(rawPath: string): string {
+  if (!rawPath) return '/';
+  const clean = rawPath.split('?')[0].split('#')[0].replace(/\/+$/, '');
+  return clean === '' ? '/' : clean;
+}
+
 function MainApp() {
   // Current route state
   const [currentRoute, setCurrentRoute] = useState<string>(() => {
-    const path = window.location.pathname;
-    return path || '/';
+    return normalizePath(window.location.pathname);
   });
 
   // Admin user state
@@ -75,26 +85,54 @@ function MainApp() {
 
   // Synchronize browser history and popstate
   const navigate = useCallback((route: string) => {
-    setCurrentRoute(route);
-    window.history.pushState({}, '', route);
+    const cleanRoute = normalizePath(route);
+    setCurrentRoute(cleanRoute);
+    window.history.pushState({}, '', cleanRoute);
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     // If navigating to admin sub-tabs
-    if (route.startsWith('/admin/')) {
-      const sub = route.replace('/admin/', '');
+    if (cleanRoute.startsWith('/admin/')) {
+      const sub = cleanRoute.replace('/admin/', '');
       if (sub && sub !== 'login') {
         setAdminTab(sub);
       }
+    } else if (cleanRoute === '/admin') {
+      setAdminTab('dashboard');
     }
   }, []);
 
   useEffect(() => {
     const handlePopState = () => {
-      setCurrentRoute(window.location.pathname || '/');
+      setCurrentRoute(normalizePath(window.location.pathname));
     };
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
+
+  // Sync document.title for SEO and clear user context
+  useEffect(() => {
+    const routeTitles: Record<string, string> = {
+      '/': 'Albright Academy | KG1 – Grade 8 — Center of Excellence and Innovation',
+      '/about': 'About Albright Academy | Vision, Mission & Values',
+      '/academics': 'Academic Programs (KG1 – Grade 8) | Albright Academy',
+      '/admissions': 'Admissions & Online Application | Albright Academy',
+      '/teachers': 'Faculty & Academic Staff | Albright Academy',
+      '/facilities': 'Campus & Modern Facilities | Albright Academy',
+      '/student-life': 'Student Life & Co-Curricular | Albright Academy',
+      '/gallery': 'Campus Gallery & Student Activities | Albright Academy',
+      '/news': 'Latest News & School Announcements | Albright Academy',
+      '/events': 'Upcoming School Events | Albright Academy',
+      '/faq': 'Frequently Asked Questions | Albright Academy',
+      '/contact': 'Contact & Campus Location | Albright Academy',
+      '/admin/login': 'Administrator Portal Login | Albright Academy',
+      '/parent/login': 'Parent & Guardian Portal | Albright Academy',
+      '/teacher/login': 'Teacher & Faculty Portal | Albright Academy',
+      '/student/login': 'Student Information Portal | Albright Academy',
+      '/portals': 'School Information Portals | Albright Academy',
+    };
+    const title = routeTitles[currentRoute] || 'Albright Academy — Center of Excellence and Innovation';
+    document.title = title;
+  }, [currentRoute]);
 
   // Fetch initial public & school data
   const loadInitialData = async () => {
@@ -167,102 +205,120 @@ function MainApp() {
   // If user is accessing /admin and not logged in, show login page
   if (isAdminRoute && currentRoute !== '/admin/login' && !isCheckingAuth && !adminUser) {
     return (
-      <AdminLoginView
-        navigate={navigate}
-        onLoginSuccess={(user) => {
-          setAdminUser(user);
-          loadAdminDashboardData();
-        }}
-      />
+      <>
+        <AdminLoginView
+          navigate={navigate}
+          onLoginSuccess={(user) => {
+            setAdminUser(user);
+            loadAdminDashboardData();
+          }}
+          currentUser={adminUser}
+        />
+        <GeminiChatbot />
+      </>
     );
   }
 
   // Admin section with layout
   if (isAdminRoute && currentRoute !== '/admin/login' && adminUser) {
     return (
-      <AdminLayout
-        currentAdminTab={adminTab}
-        setAdminTab={(tab) => {
-          setAdminTab(tab);
-          navigate(`/admin/${tab}`);
-        }}
-        adminUser={adminUser}
-        stats={stats}
-        onLogout={handleAdminLogout}
-        onNavigatePublic={() => navigate('/')}
-      >
-        {adminTab === 'dashboard' && (
-          <AdminDashboardOverview
-            stats={stats}
-            recentApplications={recentApplications}
-            recentMessages={recentMessages}
-            setAdminTab={(tab) => {
-              setAdminTab(tab);
-              navigate(`/admin/${tab}`);
-            }}
-            onRefresh={loadAdminDashboardData}
-          />
-        )}
-        {adminTab === 'applications' && (
-          <AdminApplicationsView
-            onDataChanged={() => {
-              loadAdminDashboardData();
-            }}
-          />
-        )}
-        {adminTab === 'news' && (
-          <AdminNewsView
-            news={news}
-            onDataChanged={() => {
-              api.getNews().then(setNews);
-              loadAdminDashboardData();
-            }}
-          />
-        )}
-        {adminTab === 'events' && (
-          <AdminEventsView
-            events={events}
-            onDataChanged={() => {
-              api.getEvents().then(setEvents);
-              loadAdminDashboardData();
-            }}
-          />
-        )}
-        {adminTab === 'gallery' && (
-          <AdminGalleryView
-            onDataChanged={() => {
-              loadAdminDashboardData();
-            }}
-          />
-        )}
-        {adminTab === 'messages' && (
-          <AdminMessagesView
-            onDataChanged={() => {
-              loadAdminDashboardData();
-            }}
-          />
-        )}
-        {adminTab === 'settings' && (
-          <AdminSettingsView
-            settings={settings}
-            onSettingsUpdated={(newSettings) => {
-              setSettings(newSettings);
-            }}
-          />
-        )}
-      </AdminLayout>
+      <>
+        <AdminLayout
+          currentAdminTab={adminTab}
+          setAdminTab={(tab) => {
+            setAdminTab(tab);
+            navigate(`/admin/${tab}`);
+          }}
+          adminUser={adminUser}
+          stats={stats}
+          onLogout={handleAdminLogout}
+          onNavigatePublic={() => navigate('/')}
+        >
+          {adminTab === 'dashboard' && (
+            <AdminDashboardOverview
+              stats={stats}
+              recentApplications={recentApplications}
+              recentMessages={recentMessages}
+              setAdminTab={(tab) => {
+                setAdminTab(tab);
+                navigate(`/admin/${tab}`);
+              }}
+              onRefresh={loadAdminDashboardData}
+            />
+          )}
+          {adminTab === 'applications' && (
+            <AdminApplicationsView
+              onDataChanged={() => {
+                loadAdminDashboardData();
+              }}
+            />
+          )}
+          {adminTab === 'users' && (
+            <AdminUsersView
+              onDataChanged={() => {
+                loadAdminDashboardData();
+              }}
+            />
+          )}
+          {adminTab === 'news' && (
+            <AdminNewsView
+              news={news}
+              onDataChanged={() => {
+                api.getNews().then(setNews);
+                loadAdminDashboardData();
+              }}
+            />
+          )}
+          {adminTab === 'events' && (
+            <AdminEventsView
+              events={events}
+              onDataChanged={() => {
+                api.getEvents().then(setEvents);
+                loadAdminDashboardData();
+              }}
+            />
+          )}
+          {adminTab === 'gallery' && (
+            <AdminGalleryView
+              onDataChanged={() => {
+                loadAdminDashboardData();
+              }}
+            />
+          )}
+          {adminTab === 'messages' && (
+            <AdminMessagesView
+              onDataChanged={() => {
+                loadAdminDashboardData();
+              }}
+            />
+          )}
+          {adminTab === 'settings' && (
+            <AdminSettingsView
+              settings={settings}
+              onSettingsUpdated={(newSettings) => {
+                setSettings(newSettings);
+              }}
+            />
+          )}
+        </AdminLayout>
+        <GeminiChatbot />
+      </>
     );
   }
 
   if (currentRoute === '/admin/login') {
     return (
-      <AdminLoginView
-        navigate={navigate}
-        onLoginSuccess={(user) => {
-          setAdminUser(user);
-          loadAdminDashboardData();
-        }}
-      />
+      <>
+        <AdminLoginView
+          navigate={navigate}
+          onLoginSuccess={(user) => {
+            setAdminUser(user);
+            loadAdminDashboardData();
+          }}
+          currentUser={adminUser}
+        />
+        <GeminiChatbot />
+      </>
     );
   }
 
@@ -280,6 +336,21 @@ function MainApp() {
     : currentRoute.startsWith('/student')
     ? 'student'
     : 'parent';
+
+  const isKnownPublicRoute =
+    currentRoute === '/' ||
+    currentRoute === '/about' ||
+    currentRoute === '/academics' ||
+    currentRoute === '/admissions' ||
+    currentRoute === '/teachers' ||
+    currentRoute === '/facilities' ||
+    currentRoute === '/student-life' ||
+    currentRoute === '/gallery' ||
+    currentRoute === '/news' ||
+    currentRoute === '/events' ||
+    currentRoute === '/faq' ||
+    currentRoute === '/contact' ||
+    isPortalRoute;
 
   // Render Public Website with Navbar & Footer
   return (
@@ -339,9 +410,13 @@ function MainApp() {
             navigate={navigate}
           />
         )}
+        {!isKnownPublicRoute && (
+          <NotFoundView navigate={navigate} />
+        )}
       </main>
 
       <Footer navigate={navigate} settings={settings} />
+      <GeminiChatbot />
     </div>
   );
 }

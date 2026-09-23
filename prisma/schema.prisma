@@ -1,5 +1,6 @@
 // Prisma Schema for Albright Academy
 // Center of Excellence and Innovation (KG1 - Grade 8)
+// Prepared for PostgreSQL & Prisma ERP Architecture
 
 generator client {
   provider = "prisma-client-js"
@@ -10,6 +11,44 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// -------------------------------------------------------------
+// CORE AUTHENTICATION & USERS
+// -------------------------------------------------------------
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  TEACHER
+  PARENT
+  STUDENT
+  STAFF
+}
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  username      String?        @unique
+  passwordHash  String
+  role          Role           @default(STUDENT)
+  firstName     String
+  lastName      String
+  phone         String?
+  avatarUrl     String?
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  // Role Specific Relations
+  studentProfile Student?
+  parentProfile  Parent?
+  teacherProfile Teacher?
+  staffProfile   Staff?
+
+  // System Relations
+  notifications Notification[]
+  auditLogs     AuditLog[]
+}
+
 model Admin {
   id           String   @id @default(uuid())
   name         String
@@ -18,6 +57,293 @@ model Admin {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
+
+// -------------------------------------------------------------
+// ACADEMIC STRUCTURE
+// -------------------------------------------------------------
+
+model AcademicYear {
+  id          String       @id @default(uuid())
+  name        String       // e.g. "2025-2026 / 2018 E.C."
+  startDate   DateTime
+  endDate     DateTime
+  isCurrent   Boolean      @default(false)
+  terms       Term[]
+  enrollments Enrollment[]
+  fees        Fee[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Term {
+  id             String       @id @default(uuid())
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+  name           String       // e.g. "Term 1", "Semester 1"
+  startDate      DateTime
+  endDate        DateTime
+  isCurrent      Boolean      @default(false)
+  exams          Exam[]
+  fees           Fee[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model Class {
+  id          String       @id @default(uuid())
+  name        String       // "KG1", "KG2", "KG3", "Grade 1" ... "Grade 8"
+  gradeLevel  Int          // 0 for KG, 1-8 for Primary/Junior
+  sections    Section[]
+  enrollments Enrollment[]
+  fees        Fee[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Section {
+  id          String       @id @default(uuid())
+  classId     String
+  class       Class        @relation(fields: [classId], references: [id])
+  name        String       // "Section A", "Section B"
+  roomNumber  String?
+  enrollments Enrollment[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Subject {
+  id          String       @id @default(uuid())
+  code        String       @unique // e.g. "MATH-G4", "SCI-G6"
+  name        String       // "Mathematics", "Integrated Science", "Amharic", "Afaan Oromoo"
+  description String?
+  teachers    Teacher[]    @relation("TeacherSubjects")
+  assignments Assignment[]
+  exams       Exam[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+// -------------------------------------------------------------
+// STAKEHOLDER PROFILES
+// -------------------------------------------------------------
+
+model Student {
+  id             String         @id @default(uuid())
+  userId         String?        @unique
+  user           User?          @relation(fields: [userId], references: [id])
+  studentCode    String         @unique // e.g. "ALB-STU-2026-001"
+  firstName      String
+  middleName     String?
+  lastName       String
+  dateOfBirth    DateTime
+  gender         String
+  bloodGroup     String?
+  parentId       String?
+  parent         Parent?        @relation(fields: [parentId], references: [id])
+  enrollments    Enrollment[]
+  attendances    Attendance[]
+  examResults    ExamResult[]
+  bookLoans      BookLoan[]
+  payments       Payment[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model Parent {
+  id             String    @id @default(uuid())
+  userId         String?   @unique
+  user           User?     @relation(fields: [userId], references: [id])
+  fullName       String
+  relationship   String    // "Mother", "Father", "Guardian"
+  phone          String
+  email          String?
+  address        String?
+  occupation     String?
+  students       Student[]
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Teacher {
+  id             String       @id @default(uuid())
+  userId         String?      @unique
+  user           User?        @relation(fields: [userId], references: [id])
+  teacherCode    String       @unique // e.g. "ALB-TEA-001"
+  fullName       String
+  qualification  String
+  specialization String
+  phone          String
+  email          String
+  subjects       Subject[]    @relation("TeacherSubjects")
+  assignments    Assignment[]
+  bookLoans      BookLoan[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model Staff {
+  id          String   @id @default(uuid())
+  userId      String?  @unique
+  user        User?    @relation(fields: [userId], references: [id])
+  staffCode   String   @unique
+  fullName    String
+  department  String   // "Administration", "Finance", "Library", "Security"
+  phone       String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// -------------------------------------------------------------
+// ENROLLMENT & ATTENDANCE
+// -------------------------------------------------------------
+
+model Enrollment {
+  id             String       @id @default(uuid())
+  studentId      String
+  student        Student      @relation(fields: [studentId], references: [id])
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+  classId        String
+  class          Class        @relation(fields: [classId], references: [id])
+  sectionId      String
+  section        Section      @relation(fields: [sectionId], references: [id])
+  status         String       @default("Active") // "Active", "Completed", "Transferred"
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([studentId, academicYearId])
+}
+
+model Attendance {
+  id        String   @id @default(uuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id])
+  date      DateTime
+  status    String   // "Present", "Absent", "Late", "Excused"
+  remarks   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([studentId, date])
+}
+
+// -------------------------------------------------------------
+// EXAMS & ASSIGNMENTS
+// -------------------------------------------------------------
+
+model Exam {
+  id        String       @id @default(uuid())
+  termId    String
+  term      Term         @relation(fields: [termId], references: [id])
+  subjectId String
+  subject   Subject      @relation(fields: [subjectId], references: [id])
+  title     String       // "Midterm Examination", "Final Examination"
+  maxMarks  Float        @default(100.0)
+  date      DateTime
+  results   ExamResult[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model ExamResult {
+  id            String   @id @default(uuid())
+  examId        String
+  exam          Exam     @relation(fields: [examId], references: [id])
+  studentId     String
+  student       Student  @relation(fields: [studentId], references: [id])
+  marksObtained Float
+  grade         String?  // "A+", "A", "B", etc.
+  remarks       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([examId, studentId])
+}
+
+model Assignment {
+  id          String   @id @default(uuid())
+  subjectId   String
+  subject     Subject  @relation(fields: [subjectId], references: [id])
+  teacherId   String
+  teacher     Teacher  @relation(fields: [teacherId], references: [id])
+  title       String
+  description String
+  dueDate     DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// -------------------------------------------------------------
+// FINANCE & FEES
+// -------------------------------------------------------------
+
+model Fee {
+  id             String       @id @default(uuid())
+  academicYearId String
+  academicYear   AcademicYear @relation(fields: [academicYearId], references: [id])
+  termId         String?
+  term           Term?        @relation(fields: [termId], references: [id])
+  classId        String?
+  class          Class?       @relation(fields: [classId], references: [id])
+  feeType        String       // "Tuition", "Registration", "Uniform", "Transportation", "Lab"
+  amount         Float
+  dueDate        DateTime
+  payments       Payment[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  feeId         String
+  fee           Fee      @relation(fields: [feeId], references: [id])
+  studentId     String
+  student       Student  @relation(fields: [studentId], references: [id])
+  amountPaid    Float
+  paymentDate   DateTime @default(now())
+  paymentMethod String   // "Bank Transfer", "Telebirr", "CBE Birr", "Cash"
+  receiptNumber String   @unique
+  status        String   @default("Completed") // "Completed", "Pending", "Failed"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// -------------------------------------------------------------
+// LIBRARY MANAGEMENT
+// -------------------------------------------------------------
+
+model LibraryBook {
+  id              String     @id @default(uuid())
+  isbn            String?    @unique
+  title           String
+  author          String
+  category        String     // "Science", "Literature", "History", "Children"
+  copiesAvailable Int        @default(1)
+  totalCopies     Int        @default(1)
+  loans           BookLoan[]
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+}
+
+model BookLoan {
+  id         String       @id @default(uuid())
+  bookId     String
+  book       LibraryBook  @relation(fields: [bookId], references: [id])
+  studentId  String?
+  student    Student?     @relation(fields: [studentId], references: [id])
+  teacherId  String?
+  teacher    Teacher?     @relation(fields: [teacherId], references: [id])
+  borrowDate DateTime     @default(now())
+  dueDate    DateTime
+  returnDate DateTime?
+  status     String       @default("Issued") // "Issued", "Returned", "Overdue"
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+}
+
+// -------------------------------------------------------------
+// ADMISSION, COMMUNICATIONS & AUDIT
+// -------------------------------------------------------------
 
 model AdmissionApplication {
   id                    String   @id @default(uuid())
@@ -30,15 +356,58 @@ model AdmissionApplication {
   applyingGrade         String
   previousSchool        String?
   guardianName          String
+  guardianRelationship  String?  @default("Mother")
   guardianPhone         String
   guardianEmail         String
   address               String
   emergencyContact      String
   additionalInformation String?
+  birthCertUrl          String?
+  reportCardUrl         String?
+  photoUrl              String?
   status                String   @default("New") // "New" | "Reviewing" | "Accepted" | "Rejected"
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
 }
+
+model Announcement {
+  id             String   @id @default(uuid())
+  title          String
+  content        String
+  targetAudience String   @default("ALL") // "ALL", "PARENTS", "TEACHERS", "STUDENTS"
+  isPinned       Boolean  @default(false)
+  publishedAt    DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  linkUrl   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String   // "CREATE", "UPDATE", "DELETE", "LOGIN"
+  entity    String   // "AdmissionApplication", "Student", "Grade"
+  entityId  String?
+  changes   String?  // JSON diff
+  ipAddress String?
+  createdAt DateTime @default(now())
+}
+
+// -------------------------------------------------------------
+// PUBLIC WEBSITE CONTENT & SETTINGS
+// -------------------------------------------------------------
 
 model News {
   id          String   @id @default(uuid())
@@ -95,13 +464,13 @@ model SchoolSettings {
   id                 String   @id @default("default")
   schoolName         String   @default("Albright Academy")
   slogan             String   @default("Center of Excellence and Innovation")
-  logoUrl            String   @default("/images/logo.png")
-  phone              String   @default("+251 911 234 567")
-  email              String   @default("info@albrightacademy.edu")
-  address            String   @default("Bole Sub-City, Addis Ababa, Ethiopia")
-  mapsUrl            String   @default("https://maps.google.com")
-  latitude           Float    @default(9.010793)
-  longitude          Float    @default(38.761252)
+  logoUrl            String   @default("/logo.png")
+  phone              String   @default("0923014132")
+  email              String   @default("dinigaatrading@gmail.com")
+  address            String   @default("Sheggar city, Gefarsa Gujjee, kella")
+  mapsUrl            String   @default("https://maps.google.com/?q=Sheggar+city+Gefarsa+Gujjee+kella")
+  latitude           Float    @default(9.0685)
+  longitude          Float    @default(38.6521)
   facebookUrl        String   @default("https://facebook.com/albrightacademy")
   telegramUrl        String   @default("https://t.me/albrightacademy")
   youtubeUrl         String   @default("https://youtube.com/@albrightacademy")

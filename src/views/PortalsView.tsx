@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Users,
   GraduationCap,
@@ -19,9 +19,13 @@ import {
   FileText,
   CreditCard,
   UserCheck,
+  AlertCircle,
+  KeyRound,
 } from 'lucide-react';
 import { useTranslation } from '../i18n/LanguageContext.tsx';
 import { Button } from '../components/ui/Button.tsx';
+import { PortalUser } from '../types/index.ts';
+import { api } from '../lib/api.ts';
 
 type PortalRole = 'parent' | 'teacher' | 'student';
 
@@ -35,9 +39,32 @@ export const PortalsView: React.FC<PortalsViewProps> = ({ initialRole = 'parent'
   const [activeRole, setActiveRole] = useState<PortalRole>(initialRole);
   const [userId, setUserId] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [portalUser, setPortalUser] = useState<PortalUser | null>(() => api.getStoredPortalUser());
+  const [isLoggedIn, setIsLoggedIn] = useState(() => !!api.getStoredPortalUser());
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const [selectedStudent, setSelectedStudent] = useState('Abebe Dawit (Grade 4B)');
   const [demoNotification, setDemoNotification] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialRole) {
+      setActiveRole(initialRole);
+    }
+  }, [initialRole]);
+
+  // If already logged in, set default student name if parent
+  useEffect(() => {
+    if (portalUser) {
+      if (portalUser.role === 'TEACHER') {
+        setActiveRole('teacher');
+      } else if (portalUser.role === 'PARENT') {
+        setActiveRole('parent');
+        if (portalUser.studentName) {
+          setSelectedStudent(`${portalUser.studentName} (${portalUser.studentGrade || 'Grade 4'})`);
+        }
+      }
+    }
+  }, [portalUser]);
 
   // Role metadata
   const rolesMeta = {
@@ -46,7 +73,8 @@ export const PortalsView: React.FC<PortalsViewProps> = ({ initialRole = 'parent'
       icon: <Users className="w-5 h-5 text-amber-500" />,
       tag: 'Parents & Guardians',
       color: 'border-amber-400 bg-amber-500/10 text-amber-500',
-      demoUser: 'parent.dawit@albright.family',
+      demoUser: 'parent.dawit',
+      demoPass: 'Parent123!',
       desc: 'View real-time child attendance, term grades, fee payment receipts, teacher messages, and school announcements.',
     },
     teacher: {
@@ -54,7 +82,8 @@ export const PortalsView: React.FC<PortalsViewProps> = ({ initialRole = 'parent'
       icon: <Briefcase className="w-5 h-5 text-blue-500" />,
       tag: 'Faculty & Educators',
       color: 'border-blue-400 bg-blue-500/10 text-blue-500',
-      demoUser: 'teacher.alemayehu@albrightacademy.edu',
+      demoUser: 'teacher.alem',
+      demoPass: 'Teacher123!',
       desc: 'Log classroom daily attendance, submit term report cards, publish homework assignments, and manage lesson plans.',
     },
     student: {
@@ -62,31 +91,58 @@ export const PortalsView: React.FC<PortalsViewProps> = ({ initialRole = 'parent'
       icon: <GraduationCap className="w-5 h-5 text-emerald-500" />,
       tag: 'Scholars (Grades 1–8)',
       color: 'border-emerald-400 bg-emerald-500/10 text-emerald-500',
-      demoUser: 'student.abebe@albright.student',
+      demoUser: 'student.abebe',
+      demoPass: 'Student123!',
       desc: 'Access daily timetables, homework checklists, digital library catalog, exam schedules, and learning achievements.',
     },
   };
 
-  const handleLogin = (e?: React.FormEvent) => {
+  const handleLogin = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    setIsLoggedIn(true);
-    setDemoNotification(`Logged in successfully to ${rolesMeta[activeRole].title}`);
-    setTimeout(() => setDemoNotification(null), 4000);
+    setLoginError(null);
+    setIsLoggingIn(true);
+
+    try {
+      if (!userId.trim() || !password) {
+        throw new Error('Please enter both your username/email and password.');
+      }
+
+      const res = await api.portalLogin({
+        usernameOrEmail: userId.trim(),
+        password,
+        role: activeRole.toUpperCase(),
+      });
+
+      setPortalUser(res.user);
+      setIsLoggedIn(true);
+      if (res.user.studentName) {
+        setSelectedStudent(`${res.user.studentName} (${res.user.studentGrade || 'Grade 4'})`);
+      }
+      setDemoNotification(`Welcome back, ${res.user.fullName}!`);
+      setTimeout(() => setDemoNotification(null), 4000);
+    } catch (err: any) {
+      setLoginError(err.message || 'Login failed. Please check your credentials.');
+    } finally {
+      setIsLoggingIn(false);
+    }
   };
 
   const handleLogout = () => {
+    api.portalLogout();
+    setPortalUser(null);
     setIsLoggedIn(false);
     setUserId('');
     setPassword('');
+    setLoginError(null);
+    setDemoNotification('You have been signed out.');
+    setTimeout(() => setDemoNotification(null), 3000);
   };
 
   const handleQuickDemo = (role: PortalRole) => {
     setActiveRole(role);
     setUserId(rolesMeta[role].demoUser);
-    setPassword('DemoPass2026!');
-    setIsLoggedIn(true);
-    setDemoNotification(`Demo session active for ${rolesMeta[role].title}`);
-    setTimeout(() => setDemoNotification(null), 4000);
+    setPassword(rolesMeta[role].demoPass);
+    setLoginError(null);
   };
 
   return (
@@ -245,17 +301,48 @@ export const PortalsView: React.FC<PortalsViewProps> = ({ initialRole = 'parent'
                   </div>
                 </div>
 
-                <form onSubmit={handleLogin} className="mt-6 space-y-4">
+                {/* Error Banner */}
+                {loginError && (
+                  <div className="mt-4 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-start gap-2.5">
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-bold">Authentication Notice</div>
+                      <div>{loginError}</div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Admin-Created Credentials Tip */}
+                <div className="mt-4 p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/80 text-amber-900 text-xs flex items-start gap-2.5">
+                  <KeyRound className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <div className="font-bold">Administrator-Managed Access</div>
+                    <p className="text-[11px] text-amber-800 leading-relaxed">
+                      Staff and parent accounts are provisioned by the Albright Academy Administration.
+                    </p>
+                    <div className="flex flex-wrap gap-2 pt-0.5">
+                      <button
+                        type="button"
+                        onClick={() => handleQuickDemo(activeRole)}
+                        className="font-bold underline text-amber-900 hover:text-black cursor-pointer"
+                      >
+                        Autofill @{rolesMeta[activeRole].demoUser}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <form onSubmit={handleLogin} className="mt-5 space-y-4">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                      {d.portals.idPlaceholder}
+                      Username or Email Address
                     </label>
                     <input
                       type="text"
                       required
                       value={userId}
                       onChange={(e) => setUserId(e.target.value)}
-                      placeholder={rolesMeta[activeRole].demoUser}
+                      placeholder={`e.g. ${rolesMeta[activeRole].demoUser}`}
                       className="w-full px-4 py-3 rounded-xl border border-slate-300 text-sm focus:outline-none focus:ring-2 focus:ring-[#0f2444]"
                     />
                   </div>
@@ -267,10 +354,10 @@ export const PortalsView: React.FC<PortalsViewProps> = ({ initialRole = 'parent'
                       </label>
                       <button
                         type="button"
-                        onClick={() => alert('Password reset link sent to your registered guardian/staff email address.')}
+                        onClick={() => alert('For password resets, please contact the Albright Academy Administrator or Registrar Office.')}
                         className="text-xs text-amber-600 hover:underline cursor-pointer"
                       >
-                        Forgot Password?
+                        Need Password Reset?
                       </button>
                     </div>
                     <div className="relative">
@@ -302,21 +389,22 @@ export const PortalsView: React.FC<PortalsViewProps> = ({ initialRole = 'parent'
                       type="submit"
                       variant="primary"
                       size="lg"
-                      className="w-full"
+                      disabled={isLoggingIn}
+                      className="w-full cursor-pointer bg-[#0f2444] hover:bg-[#16335d] text-amber-400 font-bold"
                       icon={<ArrowRight className="w-4 h-4" />}
                     >
-                      {d.portals.loginBtn}
+                      {isLoggingIn ? 'Authenticating...' : `${rolesMeta[activeRole].title} Login`}
                     </Button>
                   </div>
                 </form>
 
                 <div className="mt-6 pt-6 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                  <span>Need help accessing your portal?</span>
+                  <span>Need new credentials?</span>
                   <button
                     onClick={() => navigate('/contact')}
                     className="text-amber-600 font-semibold hover:underline cursor-pointer"
                   >
-                    Contact Registrar Office
+                    Contact Academy Registrar
                   </button>
                 </div>
               </div>
@@ -334,64 +422,72 @@ export const PortalsView: React.FC<PortalsViewProps> = ({ initialRole = 'parent'
                 <div>
                   <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-semibold mb-1">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    <span>Active Session • Term 2 (2026)</span>
+                    <span>
+                      Active Session • {portalUser ? `@${portalUser.username}` : 'Authenticated'}
+                    </span>
                   </div>
                   <h2 className="text-xl sm:text-2xl font-bold font-display">
-                    {activeRole === 'parent' && 'Parent Guardian Portal — Dawit Family'}
-                    {activeRole === 'teacher' && 'Teacher Portal — Mr. Dawit Alemayehu'}
-                    {activeRole === 'student' && 'Student Portal — Abebe Dawit (Grade 4B)'}
+                    {activeRole === 'parent' &&
+                      `${portalUser ? portalUser.fullName : 'Parent Guardian'} Portal`}
+                    {activeRole === 'teacher' &&
+                      `${portalUser ? portalUser.fullName : 'Teacher'} Portal`}
+                    {activeRole === 'student' &&
+                      `${portalUser ? portalUser.fullName : 'Abebe Dawit'} — Scholar Student Portal`}
                   </h2>
                   <p className="text-xs text-slate-300">
-                    Albright Academy Integrated School Management System
+                    Albright Academy Integrated School Management System • {portalUser?.role || activeRole.toUpperCase()}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <div className="flex bg-slate-800/80 p-1 rounded-xl border border-slate-700 text-xs">
-                  {(['parent', 'teacher', 'student'] as PortalRole[]).map((r) => (
-                    <button
-                      key={r}
-                      onClick={() => setActiveRole(r)}
-                      className={`px-3 py-1.5 rounded-lg capitalize transition-colors cursor-pointer ${
-                        activeRole === r ? 'bg-amber-500 text-slate-950 font-bold' : 'text-slate-300 hover:text-white'
-                      }`}
-                    >
-                      {r}
-                    </button>
-                  ))}
-                </div>
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="flex items-center gap-1.5 text-xs text-rose-300 hover:text-white border-rose-400/40 hover:bg-rose-500/20 cursor-pointer"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Sign Out</span>
+                </Button>
               </div>
             </div>
 
             {/* DASHBOARD CONTENT ACCORDING TO ROLE */}
             {activeRole === 'parent' && (
               <div className="space-y-6">
-                {/* Child Switcher */}
+                {/* Child Switcher & Linked Student Info */}
                 <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
                     <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                      Select Scholar:
+                      Enrolled Scholar:
                     </span>
                     <div className="flex gap-2">
-                      {['Abebe Dawit (Grade 4B)', 'Liya Dawit (KG2)'].map((child) => (
-                        <button
-                          key={child}
-                          onClick={() => setSelectedStudent(child)}
-                          className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                            selectedStudent === child
-                              ? 'bg-[#0f2444] text-white shadow-sm'
-                              : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-                          }`}
-                        >
-                          {child}
-                        </button>
-                      ))}
+                      <div className="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-[#0f2444] text-amber-400 shadow-sm flex items-center gap-2">
+                        <GraduationCap className="w-4 h-4 text-amber-400" />
+                        <span>
+                          {portalUser?.studentName
+                            ? `${portalUser.studentName} (${portalUser.studentGrade || 'Grade 4'})`
+                            : selectedStudent}
+                        </span>
+                      </div>
+                      {portalUser?.studentReference && (
+                        <div className="px-2.5 py-1.5 rounded-lg text-xs font-mono bg-slate-100 text-slate-600 border border-slate-200">
+                          Ref: {portalUser.studentReference}
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 text-xs text-slate-600">
-                    <UserCheck className="w-4 h-4 text-emerald-600" />
-                    <span>Attendance Rate: <strong>98.4% Present</strong></span>
+                  <div className="flex items-center gap-3 text-xs text-slate-600">
+                    {portalUser?.relationship && (
+                      <span className="px-2 py-0.5 rounded-full bg-amber-50 text-amber-900 border border-amber-200 font-semibold">
+                        Relationship: {portalUser.relationship}
+                      </span>
+                    )}
+                    <div className="flex items-center gap-1.5">
+                      <UserCheck className="w-4 h-4 text-emerald-600" />
+                      <span>Attendance Rate: <strong>98.4% Present</strong></span>
+                    </div>
                   </div>
                 </div>
 
@@ -549,11 +645,51 @@ export const PortalsView: React.FC<PortalsViewProps> = ({ initialRole = 'parent'
             {/* TEACHER DASHBOARD */}
             {activeRole === 'teacher' && (
               <div className="space-y-6">
+                {/* Teacher Profile Banner */}
+                {portalUser && (
+                  <div className="bg-blue-50/80 border border-blue-200 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold">
+                        <Briefcase className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="font-bold text-slate-900 text-sm">
+                          {portalUser.fullName}{' '}
+                          <span className="text-xs font-normal text-slate-500 font-mono">
+                            (@{portalUser.username})
+                          </span>
+                        </div>
+                        <div className="text-xs text-blue-700 font-medium">
+                          {portalUser.employeeId ? `Employee ID: ${portalUser.employeeId} • ` : ''}
+                          Role: Faculty Educator & Homeroom Instructor
+                        </div>
+                      </div>
+                    </div>
+
+                    {portalUser.subjects && portalUser.subjects.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {portalUser.subjects.map((s) => (
+                          <span
+                            key={s}
+                            className="px-2 py-0.5 bg-blue-100/80 text-blue-800 rounded-md text-[11px] font-semibold"
+                          >
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                     <div className="text-xs font-bold text-slate-500 uppercase">Assigned Classes</div>
-                    <div className="text-2xl font-black text-[#0f2444] mt-1">Grade 4B, 6A</div>
-                    <div className="text-xs text-slate-500 mt-1">42 Enrolled Scholars</div>
+                    <div className="text-2xl font-black text-[#0f2444] mt-1">
+                      {portalUser?.assignedGrades && portalUser.assignedGrades.length > 0
+                        ? portalUser.assignedGrades.join(', ')
+                        : 'Grade 4B, 6A'}
+                    </div>
+                    <div className="text-xs text-slate-500 mt-1">Active Homeroom Cohort</div>
                   </div>
                   <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                     <div className="text-xs font-bold text-slate-500 uppercase">Today's Attendance</div>
@@ -563,7 +699,7 @@ export const PortalsView: React.FC<PortalsViewProps> = ({ initialRole = 'parent'
                   <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                     <div className="text-xs font-bold text-slate-500 uppercase">Gradebook Status</div>
                     <div className="text-2xl font-black text-blue-600 mt-1">Up to Date</div>
-                    <div className="text-xs text-slate-500 mt-1">Quiz 3 scores submitted</div>
+                    <div className="text-xs text-slate-500 mt-1">Scores submitted</div>
                   </div>
                   <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                     <div className="text-xs font-bold text-slate-500 uppercase">Lesson Plan</div>
@@ -695,6 +831,42 @@ export const PortalsView: React.FC<PortalsViewProps> = ({ initialRole = 'parent'
             {/* STUDENT DASHBOARD */}
             {activeRole === 'student' && (
               <div className="space-y-6">
+                {/* Student Profile Banner */}
+                {portalUser && (
+                  <div className="bg-emerald-50/80 border border-emerald-200 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold">
+                        <GraduationCap className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="font-bold text-slate-900 text-sm">
+                          {portalUser.fullName}{' '}
+                          <span className="text-xs font-normal text-slate-500 font-mono">
+                            (@{portalUser.username})
+                          </span>
+                        </div>
+                        <div className="text-xs text-emerald-800 font-medium">
+                          {portalUser.studentReference ? `Admission Ref: ${portalUser.studentReference} • ` : ''}
+                          Class: {portalUser.enrolledGrade || portalUser.studentGrade || 'Grade 4'}
+                          {portalUser.section ? ` (Section ${portalUser.section})` : ''}
+                        </div>
+                      </div>
+                    </div>
+
+                    {portalUser.guardianName && (
+                      <div className="text-xs text-slate-600 bg-white px-3 py-1.5 rounded-xl border border-emerald-100 shadow-2xs">
+                        <span className="text-slate-400">Primary Guardian:</span>{' '}
+                        <strong className="text-slate-800">{portalUser.guardianName}</strong>
+                        {portalUser.guardianPhone && (
+                          <span className="font-mono text-slate-500 ml-1">
+                            ({portalUser.guardianPhone})
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
                     <div className="text-xs font-bold text-slate-500 uppercase">Today's Schedule</div>

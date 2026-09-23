@@ -14,6 +14,7 @@ import {
   X,
   User,
   ShieldCheck,
+  Users,
 } from 'lucide-react';
 import { DashboardStats } from '../../types/index.ts';
 
@@ -46,6 +47,11 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       icon: <FileSpreadsheet className="w-5 h-5" />,
       badge: stats?.pendingApplications ? `${stats.pendingApplications} new` : undefined,
       badgeColor: 'bg-amber-500 text-slate-950',
+    },
+    {
+      id: 'users',
+      label: 'User Accounts',
+      icon: <Users className="w-5 h-5" />,
     },
     { id: 'news', label: 'News Management', icon: <Newspaper className="w-5 h-5" /> },
     { id: 'events', label: 'Events Calendar', icon: <Calendar className="w-5 h-5" /> },
