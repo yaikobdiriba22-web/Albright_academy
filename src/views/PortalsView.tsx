@@ -26,6 +26,9 @@ import { useTranslation } from '../i18n/LanguageContext.tsx';
 import { Button } from '../components/ui/Button.tsx';
 import { PortalUser } from '../types/index.ts';
 import { api } from '../lib/api.ts';
+import { TeacherDashboard } from '../components/portals/TeacherDashboard.tsx';
+import { ParentDashboard } from '../components/portals/ParentDashboard.tsx';
+import { StudentDashboard } from '../components/portals/StudentDashboard.tsx';
 
 type PortalRole = 'parent' | 'teacher' | 'student';
 
@@ -829,150 +832,8 @@ export const PortalsView: React.FC<PortalsViewProps> = ({ initialRole = 'parent'
             )}
 
             {/* STUDENT DASHBOARD */}
-            {activeRole === 'student' && (
-              <div className="space-y-6">
-                {/* Student Profile Banner */}
-                {portalUser && (
-                  <div className="bg-emerald-50/80 border border-emerald-200 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold">
-                        <GraduationCap className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <div className="font-bold text-slate-900 text-sm">
-                          {portalUser.fullName}{' '}
-                          <span className="text-xs font-normal text-slate-500 font-mono">
-                            (@{portalUser.username})
-                          </span>
-                        </div>
-                        <div className="text-xs text-emerald-800 font-medium">
-                          {portalUser.studentReference ? `Admission Ref: ${portalUser.studentReference} • ` : ''}
-                          Class: {portalUser.enrolledGrade || portalUser.studentGrade || 'Grade 4'}
-                          {portalUser.section ? ` (Section ${portalUser.section})` : ''}
-                        </div>
-                      </div>
-                    </div>
+            {activeRole === 'student' && <StudentDashboard portalUser={portalUser} />}
 
-                    {portalUser.guardianName && (
-                      <div className="text-xs text-slate-600 bg-white px-3 py-1.5 rounded-xl border border-emerald-100 shadow-2xs">
-                        <span className="text-slate-400">Primary Guardian:</span>{' '}
-                        <strong className="text-slate-800">{portalUser.guardianName}</strong>
-                        {portalUser.guardianPhone && (
-                          <span className="font-mono text-slate-500 ml-1">
-                            ({portalUser.guardianPhone})
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="text-xs font-bold text-slate-500 uppercase">Today's Schedule</div>
-                    <div className="text-2xl font-black text-[#0f2444] mt-1">6 Periods</div>
-                    <div className="text-xs text-slate-500 mt-1">Current: Robotics & STEM</div>
-                  </div>
-                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="text-xs font-bold text-slate-500 uppercase">Homework Checklist</div>
-                    <div className="text-2xl font-black text-emerald-600 mt-1">2 Pending</div>
-                    <div className="text-xs text-slate-500 mt-1">Due Tomorrow 8:00 AM</div>
-                  </div>
-                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="text-xs font-bold text-slate-500 uppercase">Library Books</div>
-                    <div className="text-2xl font-black text-blue-600 mt-1">2 Borrowed</div>
-                    <div className="text-xs text-slate-500 mt-1">Return in 4 days</div>
-                  </div>
-                  <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
-                    <div className="text-xs font-bold text-slate-500 uppercase">Badges Earned</div>
-                    <div className="text-2xl font-black text-amber-500 mt-1">5 Badges</div>
-                    <div className="text-xs text-slate-500 mt-1">STEM Innovator Star</div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                  {/* Daily Schedule */}
-                  <div className="lg:col-span-7 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                    <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                      <h3 className="text-base font-bold text-slate-900">Today’s Timetable (Grade 4B)</h3>
-                      <Clock className="w-4 h-4 text-slate-400" />
-                    </div>
-
-                    <div className="space-y-2 text-xs">
-                      {[
-                        { time: '08:00 – 08:45 AM', subject: 'Mathematics (Fractions & Decimals)', teacher: 'Mr. Dawit', room: 'Room 12' },
-                        { time: '08:50 – 09:35 AM', subject: 'Inquiry Science (Plant Ecosystems)', teacher: 'Ms. Hanan', room: 'Science Lab' },
-                        { time: '09:35 – 10:00 AM', subject: 'Morning Break & Nutrition Snack', teacher: 'Cafeteria Staff', room: 'Cafeteria' },
-                        { time: '10:00 – 10:45 AM', subject: 'English Reading & Creative Writing', teacher: 'Ms. Senait', room: 'Room 12' },
-                        { time: '10:50 – 11:35 AM', subject: 'Afaan Oromoo Language & Heritage', teacher: 'Mr. Tolosa', room: 'Room 12' },
-                        { time: '11:40 – 12:25 PM', subject: 'Robotics & Block Coding', teacher: 'Mr. Yohannes', room: 'Computer Lab' },
-                      ].map((item, idx) => (
-                        <div
-                          key={idx}
-                          className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 hover:bg-amber-50/60 transition-colors"
-                        >
-                          <div className="space-y-0.5">
-                            <span className="font-bold text-slate-900">{item.subject}</span>
-                            <div className="text-slate-500 text-[11px]">{item.teacher} • {item.room}</div>
-                          </div>
-                          <span className="font-mono text-slate-600 bg-white px-2 py-1 rounded border border-slate-200">
-                            {item.time}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Homework & Badges */}
-                  <div className="lg:col-span-5 space-y-6">
-                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                      <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                        <h3 className="text-base font-bold text-slate-900">Homework Checklist</h3>
-                        <BookOpen className="w-4 h-4 text-slate-400" />
-                      </div>
-                      <div className="space-y-2.5 text-xs">
-                        <label className="flex items-start gap-2.5 p-2.5 rounded-lg bg-slate-50 border border-slate-100 cursor-pointer">
-                          <input type="checkbox" className="mt-0.5 w-4 h-4 text-[#0f2444] rounded" />
-                          <div>
-                            <span className="font-bold text-slate-800">Math Practice Book page 42</span>
-                            <p className="text-slate-500 text-[11px]">Due tomorrow at 8:00 AM</p>
-                          </div>
-                        </label>
-                        <label className="flex items-start gap-2.5 p-2.5 rounded-lg bg-slate-50 border border-slate-100 cursor-pointer">
-                          <input type="checkbox" className="mt-0.5 w-4 h-4 text-[#0f2444] rounded" />
-                          <div>
-                            <span className="font-bold text-slate-800">Science Journal: Leaf Sketches</span>
-                            <p className="text-slate-500 text-[11px]">Due Wednesday</p>
-                          </div>
-                        </label>
-                        <label className="flex items-start gap-2.5 p-2.5 rounded-lg bg-emerald-50/60 border border-emerald-200 cursor-pointer">
-                          <input type="checkbox" defaultChecked className="mt-0.5 w-4 h-4 text-emerald-600 rounded" />
-                          <div>
-                            <span className="font-bold text-slate-800 line-through">English Vocabulary Sentences</span>
-                            <p className="text-emerald-700 text-[11px]">Completed & Submitted</p>
-                          </div>
-                        </label>
-                      </div>
-                    </div>
-
-                    <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-3">
-                      <h3 className="text-base font-bold text-slate-900">Academic Achievements</h3>
-                      <div className="flex flex-wrap gap-2 text-xs">
-                        <span className="px-3 py-1.5 rounded-full bg-amber-100 text-amber-900 font-bold border border-amber-300">
-                          🏆 Math Olympiad Silver
-                        </span>
-                        <span className="px-3 py-1.5 rounded-full bg-indigo-100 text-indigo-900 font-bold border border-indigo-300">
-                          🤖 Robotics Master
-                        </span>
-                        <span className="px-3 py-1.5 rounded-full bg-emerald-100 text-emerald-900 font-bold border border-emerald-300">
-                          ⭐ 100% Attendance Star
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>

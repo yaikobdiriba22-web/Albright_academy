@@ -1,0 +1,305 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User account in the school management system",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "username": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["ADMIN", "TEACHER", "PARENT", "STUDENT"] },
+        "fullName": { "type": "string" },
+        "phone": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "username", "role", "fullName", "isActive"]
+    },
+    "Student": {
+      "title": "Student",
+      "description": "Enrolled student profile at Albright Academy",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "studentCode": { "type": "string" },
+        "fullName": { "type": "string" },
+        "gender": { "type": "string", "enum": ["Male", "Female"] },
+        "dateOfBirth": { "type": "string" },
+        "classId": { "type": "string" },
+        "sectionId": { "type": "string" },
+        "parentId": { "type": "string" },
+        "guardianName": { "type": "string" },
+        "guardianPhone": { "type": "string" },
+        "status": { "type": "string", "enum": ["Active", "Transferred", "Graduated"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "studentCode", "fullName", "classId"]
+    },
+    "Teacher": {
+      "title": "Teacher",
+      "description": "Faculty instructor profile",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "teacherCode": { "type": "string" },
+        "fullName": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "qualification": { "type": "string" },
+        "assignedClassIds": { "type": "array" },
+        "assignedSubjectIds": { "type": "array" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "teacherCode", "fullName"]
+    },
+    "Parent": {
+      "title": "Parent",
+      "description": "Parent or guardian profile",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "fullName": { "type": "string" },
+        "relationship": { "type": "string" },
+        "phone": { "type": "string" },
+        "email": { "type": "string" },
+        "address": { "type": "string" },
+        "studentIds": { "type": "array" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "fullName", "phone"]
+    },
+    "Class": {
+      "title": "Class",
+      "description": "Academic grade cohort (KG1 - Grade 8)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "gradeLevel": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "name", "gradeLevel"]
+    },
+    "Section": {
+      "title": "Section",
+      "description": "Classroom section/stream (e.g. A, B, C)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "classId": { "type": "string" },
+        "name": { "type": "string" },
+        "roomNumber": { "type": "string" },
+        "classTeacherId": { "type": "string" }
+      },
+      "required": ["id", "classId", "name"]
+    },
+    "Subject": {
+      "title": "Subject",
+      "description": "Instructional course/subject",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "code": { "type": "string" },
+        "name": { "type": "string" },
+        "gradeLevels": { "type": "array" }
+      },
+      "required": ["id", "code", "name"]
+    },
+    "Enrollment": {
+      "title": "Enrollment",
+      "description": "Student class and section enrollment record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "studentId": { "type": "string" },
+        "classId": { "type": "string" },
+        "sectionId": { "type": "string" },
+        "academicYear": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "studentId", "classId", "sectionId"]
+    },
+    "Attendance": {
+      "title": "Attendance",
+      "description": "Daily attendance mark",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "studentId": { "type": "string" },
+        "classId": { "type": "string" },
+        "sectionId": { "type": "string" },
+        "date": { "type": "string" },
+        "status": { "type": "string", "enum": ["Present", "Absent", "Late", "Excused"] },
+        "remarks": { "type": "string" },
+        "markedBy": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "studentId", "classId", "date", "status"]
+    },
+    "Assignment": {
+      "title": "Assignment",
+      "description": "Class homework or coursework assignment",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "teacherId": { "type": "string" },
+        "classId": { "type": "string" },
+        "subjectId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "dueDate": { "type": "string" },
+        "maxPoints": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "teacherId", "classId", "subjectId", "title", "dueDate"]
+    },
+    "Exam": {
+      "title": "Exam",
+      "description": "Assessment or term examination",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "classId": { "type": "string" },
+        "subjectId": { "type": "string" },
+        "term": { "type": "string" },
+        "date": { "type": "string" },
+        "maxMarks": { "type": "number" }
+      },
+      "required": ["id", "title", "classId", "subjectId", "maxMarks"]
+    },
+    "Result": {
+      "title": "Result",
+      "description": "Student score on an assessment or examination",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "examId": { "type": "string" },
+        "studentId": { "type": "string" },
+        "subjectId": { "type": "string" },
+        "classId": { "type": "string" },
+        "marksObtained": { "type": "number" },
+        "grade": { "type": "string" },
+        "remarks": { "type": "string" },
+        "enteredBy": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "examId", "studentId", "marksObtained"]
+    },
+    "Fee": {
+      "title": "Fee",
+      "description": "Tuition or auxiliary fee schedule",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "feeType": { "type": "string" },
+        "classId": { "type": "string" },
+        "amount": { "type": "number" },
+        "dueDate": { "type": "string" }
+      },
+      "required": ["id", "title", "amount", "dueDate"]
+    },
+    "Payment": {
+      "title": "Payment",
+      "description": "Tuition payment receipt record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "feeId": { "type": "string" },
+        "studentId": { "type": "string" },
+        "amountPaid": { "type": "number" },
+        "receiptNumber": { "type": "string" },
+        "paymentMethod": { "type": "string" },
+        "paymentDate": { "type": "string" },
+        "status": { "type": "string" }
+      },
+      "required": ["id", "studentId", "amountPaid", "receiptNumber"]
+    },
+    "Announcement": {
+      "title": "Announcement",
+      "description": "School bulletin announcement",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "targetAudience": { "type": "string", "enum": ["ALL", "TEACHERS", "PARENTS", "STUDENTS"] },
+        "isPinned": { "type": "boolean" },
+        "author": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "title", "content", "targetAudience"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles and credentials"
+    },
+    "/students/{studentId}": {
+      "schema": "Student",
+      "description": "Enrolled student scholars"
+    },
+    "/teachers/{teacherId}": {
+      "schema": "Teacher",
+      "description": "Faculty teachers"
+    },
+    "/parents/{parentId}": {
+      "schema": "Parent",
+      "description": "Parents and guardians"
+    },
+    "/classes/{classId}": {
+      "schema": "Class",
+      "description": "Grade cohorts KG1 through Grade 8"
+    },
+    "/sections/{sectionId}": {
+      "schema": "Section",
+      "description": "Class sections"
+    },
+    "/subjects/{subjectId}": {
+      "schema": "Subject",
+      "description": "Curriculum subjects"
+    },
+    "/enrollments/{enrollmentId}": {
+      "schema": "Enrollment",
+      "description": "Student classroom enrollments"
+    },
+    "/attendances/{attendanceId}": {
+      "schema": "Attendance",
+      "description": "Daily student attendance records"
+    },
+    "/assignments/{assignmentId}": {
+      "schema": "Assignment",
+      "description": "Class assignments and homework"
+    },
+    "/exams/{examId}": {
+      "schema": "Exam",
+      "description": "Exams and quizzes"
+    },
+    "/results/{resultId}": {
+      "schema": "Result",
+      "description": "Academic scores and report marks"
+    },
+    "/fees/{feeId}": {
+      "schema": "Fee",
+      "description": "School tuition and fee schedules"
+    },
+    "/payments/{paymentId}": {
+      "schema": "Payment",
+      "description": "Receipts and payments"
+    },
+    "/announcements/{announcementId}": {
+      "schema": "Announcement",
+      "description": "Announcements and circulars"
+    }
+  }
+}

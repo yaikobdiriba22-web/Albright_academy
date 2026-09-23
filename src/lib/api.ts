@@ -9,6 +9,19 @@ import {
   SchoolSettings,
   PortalUser,
   UserRole,
+  AcademicClass,
+  ClassSection,
+  CurriculumSubject,
+  StudentProfile,
+  TeacherProfile,
+  ParentProfile,
+  AttendanceRecord,
+  CourseAssignment,
+  SchoolExam,
+  AcademicResult,
+  SchoolFee,
+  TuitionPayment,
+  SchoolAnnouncement,
 } from '../types/index.ts';
 
 const API_BASE = '/api';
@@ -216,6 +229,20 @@ function getPortalAuthHeaders(): HeadersInit {
   }
   return headers;
 }
+
+function getAnyAuthHeaders(): HeadersInit {
+  const adminToken = localStorage.getItem('albright_admin_token');
+  const portalToken = localStorage.getItem('albright_portal_token');
+  const token = adminToken || portalToken;
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
 
 /**
  * Robust JSON fetch helper that safely parses responses and catches non-JSON HTML error pages
@@ -827,4 +854,428 @@ export const api = {
       'Failed to delete user'
     );
   },
+
+  // ==========================================
+  // SCHOOL MANAGEMENT SYSTEM (SMS) CLIENT API
+  // ==========================================
+
+  async getSmsMe(): Promise<any> {
+    return safeFetchJson<any>(
+      `${API_BASE}/sms/me`,
+      { headers: getAnyAuthHeaders() },
+      'Failed to fetch user SMS profile'
+    );
+  },
+
+  // Classes & Sections
+  async getClasses(): Promise<AcademicClass[]> {
+    return safeFetchJson<AcademicClass[]>(
+      `${API_BASE}/sms/classes`,
+      { headers: getAnyAuthHeaders() },
+      'Failed to fetch classes'
+    );
+  },
+
+  async createClass(data: { name: string; gradeLevel: number }): Promise<AcademicClass> {
+    return safeFetchJson<AcademicClass>(
+      `${API_BASE}/sms/classes`,
+      {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data),
+      },
+      'Failed to create class'
+    );
+  },
+
+  async updateClass(id: string, data: Partial<AcademicClass>): Promise<AcademicClass> {
+    return safeFetchJson<AcademicClass>(
+      `${API_BASE}/sms/classes/${id}`,
+      {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data),
+      },
+      'Failed to update class'
+    );
+  },
+
+  async deleteClass(id: string): Promise<void> {
+    await safeFetchJson<any>(
+      `${API_BASE}/sms/classes/${id}`,
+      { method: 'DELETE', headers: getAuthHeaders() },
+      'Failed to delete class'
+    );
+  },
+
+  async getSections(classId?: string): Promise<ClassSection[]> {
+    const qs = classId ? `?classId=${classId}` : '';
+    return safeFetchJson<ClassSection[]>(
+      `${API_BASE}/sms/sections${qs}`,
+      { headers: getAnyAuthHeaders() },
+      'Failed to fetch sections'
+    );
+  },
+
+  async createSection(data: { classId: string; name: string; roomNumber?: string; classTeacherId?: string }): Promise<ClassSection> {
+    return safeFetchJson<ClassSection>(
+      `${API_BASE}/sms/sections`,
+      {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data),
+      },
+      'Failed to create section'
+    );
+  },
+
+  // Subjects
+  async getSubjects(): Promise<CurriculumSubject[]> {
+    return safeFetchJson<CurriculumSubject[]>(
+      `${API_BASE}/sms/subjects`,
+      { headers: getAnyAuthHeaders() },
+      'Failed to fetch subjects'
+    );
+  },
+
+  async createSubject(data: { code: string; name: string; description?: string; gradeLevels?: number[] }): Promise<CurriculumSubject> {
+    return safeFetchJson<CurriculumSubject>(
+      `${API_BASE}/sms/subjects`,
+      {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data),
+      },
+      'Failed to create subject'
+    );
+  },
+
+  async deleteSubject(id: string): Promise<void> {
+    await safeFetchJson<any>(
+      `${API_BASE}/sms/subjects/${id}`,
+      { method: 'DELETE', headers: getAuthHeaders() },
+      'Failed to delete subject'
+    );
+  },
+
+  // Teachers
+  async getTeachers(): Promise<TeacherProfile[]> {
+    return safeFetchJson<TeacherProfile[]>(
+      `${API_BASE}/sms/teachers`,
+      { headers: getAnyAuthHeaders() },
+      'Failed to fetch teachers'
+    );
+  },
+
+  async createTeacher(data: Partial<TeacherProfile>): Promise<TeacherProfile> {
+    return safeFetchJson<TeacherProfile>(
+      `${API_BASE}/sms/teachers`,
+      {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data),
+      },
+      'Failed to create teacher'
+    );
+  },
+
+  async updateTeacher(id: string, data: Partial<TeacherProfile>): Promise<TeacherProfile> {
+    return safeFetchJson<TeacherProfile>(
+      `${API_BASE}/sms/teachers/${id}`,
+      {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data),
+      },
+      'Failed to update teacher'
+    );
+  },
+
+  async deleteTeacher(id: string): Promise<void> {
+    await safeFetchJson<any>(
+      `${API_BASE}/sms/teachers/${id}`,
+      { method: 'DELETE', headers: getAuthHeaders() },
+      'Failed to delete teacher'
+    );
+  },
+
+  // Parents
+  async getParents(): Promise<ParentProfile[]> {
+    return safeFetchJson<ParentProfile[]>(
+      `${API_BASE}/sms/parents`,
+      { headers: getAnyAuthHeaders() },
+      'Failed to fetch parents'
+    );
+  },
+
+  async createParent(data: Partial<ParentProfile>): Promise<ParentProfile> {
+    return safeFetchJson<ParentProfile>(
+      `${API_BASE}/sms/parents`,
+      {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data),
+      },
+      'Failed to create parent profile'
+    );
+  },
+
+  async updateParent(id: string, data: Partial<ParentProfile>): Promise<ParentProfile> {
+    return safeFetchJson<ParentProfile>(
+      `${API_BASE}/sms/parents/${id}`,
+      {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data),
+      },
+      'Failed to update parent profile'
+    );
+  },
+
+  // Students (Enforces server-side RBAC)
+  async getStudents(params?: { classId?: string; sectionId?: string; search?: string }): Promise<StudentProfile[]> {
+    const qs = new URLSearchParams();
+    if (params?.classId) qs.set('classId', params.classId);
+    if (params?.sectionId) qs.set('sectionId', params.sectionId);
+    if (params?.search) qs.set('search', params.search);
+    const queryString = qs.toString() ? `?${qs.toString()}` : '';
+
+    return safeFetchJson<StudentProfile[]>(
+      `${API_BASE}/sms/students${queryString}`,
+      { headers: getAnyAuthHeaders() },
+      'Failed to fetch students'
+    );
+  },
+
+  async createStudent(data: Partial<StudentProfile>): Promise<StudentProfile> {
+    return safeFetchJson<StudentProfile>(
+      `${API_BASE}/sms/students`,
+      {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data),
+      },
+      'Failed to register student'
+    );
+  },
+
+  async updateStudent(id: string, data: Partial<StudentProfile>): Promise<StudentProfile> {
+    return safeFetchJson<StudentProfile>(
+      `${API_BASE}/sms/students/${id}`,
+      {
+        method: 'PUT',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data),
+      },
+      'Failed to update student'
+    );
+  },
+
+  async deleteStudent(id: string): Promise<void> {
+    await safeFetchJson<any>(
+      `${API_BASE}/sms/students/${id}`,
+      { method: 'DELETE', headers: getAuthHeaders() },
+      'Failed to delete student'
+    );
+  },
+
+  // Attendance
+  async getAttendances(params?: { classId?: string; date?: string; studentId?: string }): Promise<AttendanceRecord[]> {
+    const qs = new URLSearchParams();
+    if (params?.classId) qs.set('classId', params.classId);
+    if (params?.date) qs.set('date', params.date);
+    if (params?.studentId) qs.set('studentId', params.studentId);
+    const queryString = qs.toString() ? `?${qs.toString()}` : '';
+
+    return safeFetchJson<AttendanceRecord[]>(
+      `${API_BASE}/sms/attendances${queryString}`,
+      { headers: getAnyAuthHeaders() },
+      'Failed to fetch attendance records'
+    );
+  },
+
+  async markAttendances(items: Array<{
+    studentId: string;
+    classId: string;
+    sectionId?: string;
+    date: string;
+    status: 'Present' | 'Absent' | 'Late' | 'Excused';
+    remarks?: string;
+  }>): Promise<{ success: boolean; count: number; records: AttendanceRecord[] }> {
+    return safeFetchJson<any>(
+      `${API_BASE}/sms/attendances`,
+      {
+        method: 'POST',
+        headers: getAnyAuthHeaders(),
+        body: JSON.stringify({ items }),
+      },
+      'Failed to save attendance'
+    );
+  },
+
+  // Assignments
+  async getAssignments(): Promise<CourseAssignment[]> {
+    return safeFetchJson<CourseAssignment[]>(
+      `${API_BASE}/sms/assignments`,
+      { headers: getAnyAuthHeaders() },
+      'Failed to fetch assignments'
+    );
+  },
+
+  async createAssignment(data: Partial<CourseAssignment>): Promise<CourseAssignment> {
+    return safeFetchJson<CourseAssignment>(
+      `${API_BASE}/sms/assignments`,
+      {
+        method: 'POST',
+        headers: getAnyAuthHeaders(),
+        body: JSON.stringify(data),
+      },
+      'Failed to post assignment'
+    );
+  },
+
+  async deleteAssignment(id: string): Promise<void> {
+    await safeFetchJson<any>(
+      `${API_BASE}/sms/assignments/${id}`,
+      { method: 'DELETE', headers: getAnyAuthHeaders() },
+      'Failed to delete assignment'
+    );
+  },
+
+  // Exams & Results
+  async getExams(): Promise<SchoolExam[]> {
+    return safeFetchJson<SchoolExam[]>(
+      `${API_BASE}/sms/exams`,
+      { headers: getAnyAuthHeaders() },
+      'Failed to fetch exams'
+    );
+  },
+
+  async createExam(data: Partial<SchoolExam>): Promise<SchoolExam> {
+    return safeFetchJson<SchoolExam>(
+      `${API_BASE}/sms/exams`,
+      {
+        method: 'POST',
+        headers: getAnyAuthHeaders(),
+        body: JSON.stringify(data),
+      },
+      'Failed to create exam'
+    );
+  },
+
+  async getResults(params?: { examId?: string; studentId?: string; classId?: string }): Promise<AcademicResult[]> {
+    const qs = new URLSearchParams();
+    if (params?.examId) qs.set('examId', params.examId);
+    if (params?.studentId) qs.set('studentId', params.studentId);
+    if (params?.classId) qs.set('classId', params.classId);
+    const queryString = qs.toString() ? `?${qs.toString()}` : '';
+
+    return safeFetchJson<AcademicResult[]>(
+      `${API_BASE}/sms/results${queryString}`,
+      { headers: getAnyAuthHeaders() },
+      'Failed to fetch academic results'
+    );
+  },
+
+  async recordResult(data: {
+    examId: string;
+    studentId: string;
+    marksObtained: number;
+    remarks?: string;
+  }): Promise<AcademicResult> {
+    return safeFetchJson<AcademicResult>(
+      `${API_BASE}/sms/results`,
+      {
+        method: 'POST',
+        headers: getAnyAuthHeaders(),
+        body: JSON.stringify(data),
+      },
+      'Failed to record marks'
+    );
+  },
+
+  // Fees & Payments
+  async getFees(): Promise<SchoolFee[]> {
+    return safeFetchJson<SchoolFee[]>(
+      `${API_BASE}/sms/fees`,
+      { headers: getAnyAuthHeaders() },
+      'Failed to fetch fees'
+    );
+  },
+
+  async createFee(data: Partial<SchoolFee>): Promise<SchoolFee> {
+    return safeFetchJson<SchoolFee>(
+      `${API_BASE}/sms/fees`,
+      {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data),
+      },
+      'Failed to create fee schedule'
+    );
+  },
+
+  async deleteFee(id: string): Promise<void> {
+    await safeFetchJson<any>(
+      `${API_BASE}/sms/fees/${id}`,
+      { method: 'DELETE', headers: getAuthHeaders() },
+      'Failed to delete fee schedule'
+    );
+  },
+
+  async getPayments(): Promise<TuitionPayment[]> {
+    return safeFetchJson<TuitionPayment[]>(
+      `${API_BASE}/sms/payments`,
+      { headers: getAnyAuthHeaders() },
+      'Failed to fetch payments'
+    );
+  },
+
+  async recordPayment(data: {
+    feeId: string;
+    studentId: string;
+    amountPaid: number;
+    paymentMethod: 'Telebirr' | 'CBE Birr' | 'Bank Transfer' | 'Cash';
+    receiptNumber?: string;
+  }): Promise<TuitionPayment> {
+    return safeFetchJson<TuitionPayment>(
+      `${API_BASE}/sms/payments`,
+      {
+        method: 'POST',
+        headers: getAnyAuthHeaders(),
+        body: JSON.stringify(data),
+      },
+      'Failed to record payment'
+    );
+  },
+
+  // Announcements
+  async getAnnouncements(): Promise<SchoolAnnouncement[]> {
+    return safeFetchJson<SchoolAnnouncement[]>(
+      `${API_BASE}/sms/announcements`,
+      { headers: getAnyAuthHeaders() },
+      'Failed to fetch announcements'
+    );
+  },
+
+  async createAnnouncement(data: Partial<SchoolAnnouncement>): Promise<SchoolAnnouncement> {
+    return safeFetchJson<SchoolAnnouncement>(
+      `${API_BASE}/sms/announcements`,
+      {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(data),
+      },
+      'Failed to post announcement'
+    );
+  },
+
+  async deleteAnnouncement(id: string): Promise<void> {
+    await safeFetchJson<any>(
+      `${API_BASE}/sms/announcements/${id}`,
+      { method: 'DELETE', headers: getAuthHeaders() },
+      'Failed to delete announcement'
+    );
+  },
 };
+

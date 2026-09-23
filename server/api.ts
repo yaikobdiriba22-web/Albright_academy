@@ -23,8 +23,12 @@ import {
   PortalUser,
   UserRole,
 } from '../src/types/index.ts';
+import smsRoutes from './smsRoutes.ts';
 
 const router = Router();
+
+// Mount School Management System RBAC routes
+router.use('/sms', smsRoutes);
 
 // ==========================================
 // PUBLIC ENDPOINTS

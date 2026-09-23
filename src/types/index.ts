@@ -185,3 +185,200 @@ export interface DashboardStats {
   unreadMessages: number;
   totalGalleryImages: number;
 }
+
+// ---------------------------------------------------------------------------
+// SCHOOL MANAGEMENT SYSTEM (SMS) CORE DOMAIN MODELS
+// ---------------------------------------------------------------------------
+
+export interface AcademicClass {
+  id: string;
+  name: string; // e.g. "KG1", "Grade 1", ..., "Grade 8"
+  gradeLevel: number; // 0 for KG, 1..8
+  sections?: ClassSection[];
+  createdAt: string;
+}
+
+export interface ClassSection {
+  id: string;
+  classId: string;
+  className?: string;
+  name: string; // "A", "B", "C"
+  roomNumber?: string;
+  classTeacherId?: string;
+  classTeacherName?: string;
+  studentCount?: number;
+}
+
+export interface CurriculumSubject {
+  id: string;
+  code: string; // e.g. "MATH-G4"
+  name: string; // e.g. "Mathematics", "Afaan Oromoo", "Amharic"
+  description?: string;
+  gradeLevels: number[];
+}
+
+export interface StudentProfile {
+  id: string;
+  userId: string;
+  studentCode: string; // e.g. "ALB-STU-2026-001"
+  fullName: string;
+  gender: 'Male' | 'Female';
+  dateOfBirth: string;
+  classId: string;
+  className?: string;
+  sectionId: string;
+  sectionName?: string;
+  parentId?: string;
+  parentName?: string;
+  guardianName: string;
+  guardianPhone: string;
+  status: 'Active' | 'Transferred' | 'Graduated';
+  createdAt: string;
+}
+
+export interface TeacherProfile {
+  id: string;
+  userId: string;
+  teacherCode: string; // e.g. "ALB-TEA-001"
+  fullName: string;
+  email: string;
+  phone: string;
+  qualification: string;
+  assignedClassIds: string[]; // Class IDs
+  assignedSubjectIds: string[]; // Subject IDs
+  createdAt: string;
+}
+
+export interface ParentProfile {
+  id: string;
+  userId: string;
+  fullName: string;
+  relationship: string; // "Father", "Mother", "Guardian"
+  phone: string;
+  email?: string;
+  address?: string;
+  studentIds: string[];
+  students?: StudentProfile[];
+  createdAt: string;
+}
+
+export interface StudentEnrollment {
+  id: string;
+  studentId: string;
+  studentName?: string;
+  studentCode?: string;
+  classId: string;
+  className?: string;
+  sectionId: string;
+  sectionName?: string;
+  academicYear: string;
+  status: 'Active' | 'Completed' | 'Transferred';
+  createdAt: string;
+}
+
+export type AttendanceStatus = 'Present' | 'Absent' | 'Late' | 'Excused';
+
+export interface AttendanceRecord {
+  id: string;
+  studentId: string;
+  studentName?: string;
+  studentCode?: string;
+  classId: string;
+  className?: string;
+  sectionId: string;
+  sectionName?: string;
+  date: string; // YYYY-MM-DD
+  status: AttendanceStatus;
+  remarks?: string;
+  markedBy: string;
+  createdAt: string;
+}
+
+export interface CourseAssignment {
+  id: string;
+  teacherId: string;
+  teacherName?: string;
+  classId: string;
+  className?: string;
+  sectionId?: string;
+  sectionName?: string;
+  subjectId: string;
+  subjectName?: string;
+  title: string;
+  description: string;
+  dueDate: string; // YYYY-MM-DD
+  maxPoints: number;
+  createdAt: string;
+}
+
+export interface SchoolExam {
+  id: string;
+  title: string;
+  classId: string;
+  className?: string;
+  subjectId: string;
+  subjectName?: string;
+  term: string; // "Term 1", "Term 2", "Midterm", "Final"
+  date: string; // YYYY-MM-DD
+  maxMarks: number;
+  createdAt: string;
+}
+
+export interface AcademicResult {
+  id: string;
+  examId: string;
+  examTitle?: string;
+  studentId: string;
+  studentName?: string;
+  studentCode?: string;
+  subjectId: string;
+  subjectName?: string;
+  classId: string;
+  className?: string;
+  marksObtained: number;
+  maxMarks: number;
+  percentage: number;
+  grade: string; // "A+", "A", "B+", "B", "C", "D", "F"
+  remarks?: string;
+  enteredBy: string;
+  updatedAt: string;
+}
+
+export interface SchoolFee {
+  id: string;
+  title: string; // e.g. "Term 1 Tuition 2026"
+  feeType: 'Tuition' | 'Registration' | 'Uniform' | 'Transport' | 'Materials';
+  classId?: string; // Optional class filter
+  className?: string;
+  amount: number;
+  dueDate: string; // YYYY-MM-DD
+  createdAt: string;
+}
+
+export interface TuitionPayment {
+  id: string;
+  feeId: string;
+  feeTitle?: string;
+  studentId: string;
+  studentName?: string;
+  studentCode?: string;
+  parentId?: string;
+  amountPaid: number;
+  totalFeeAmount?: number;
+  receiptNumber: string; // e.g. "REC-2026-084"
+  paymentMethod: 'Telebirr' | 'CBE Birr' | 'Bank Transfer' | 'Cash';
+  paymentDate: string;
+  status: 'Completed' | 'Pending' | 'Verified';
+}
+
+export interface SchoolAnnouncement {
+  id: string;
+  title: string;
+  content: string;
+  targetAudience: 'ALL' | 'TEACHERS' | 'PARENTS' | 'STUDENTS';
+  isPinned: boolean;
+  author: string;
+  publishedAt: string;
+  createdAt: string;
+}
+
