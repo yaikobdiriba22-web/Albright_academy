@@ -42,6 +42,7 @@ export interface TranslationDictionary {
     studentPortal: string;
     adminPortal: string;
     admissionsOpenBadge: string;
+    centerOfExcellence?: string;
   };
   nav: {
     home: string;
@@ -57,6 +58,10 @@ export interface TranslationDictionary {
     faq: string;
     contact: string;
     portals: string;
+    admin?: string;
+    adminDashboard?: string;
+    more?: string;
+    moreDesc?: string;
   };
   hero: {
     headline: string;
@@ -70,6 +75,7 @@ export interface TranslationDictionary {
     statExcellenceLabel: string;
     floatingBadgeTitle: string;
     floatingBadgeDesc: string;
+    imageAlt?: string;
   };
   home: {
     introHeading: string;
@@ -274,8 +280,11 @@ export interface TranslationDictionary {
   };
   portals: {
     parentTitle: string;
+    parentDesc?: string;
     teacherTitle: string;
+    teacherDesc?: string;
     studentTitle: string;
+    studentDesc?: string;
     loginHeadline: string;
     loginSubheadline: string;
     idPlaceholder: string;
@@ -293,5 +302,10 @@ export interface TranslationDictionary {
     allRightsReserved: string;
     privacyPolicy: string;
     termsOfService: string;
+    languageLabel?: string;
+    accreditedSubtitle?: string;
+    adminLogin?: string;
+    taglineValues?: string;
+    accreditedBadge?: string;
   };
 }

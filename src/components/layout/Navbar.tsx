@@ -79,19 +79,19 @@ export const Navbar: React.FC<NavbarProps> = ({
   const portalLinks = [
     {
       title: d.common.parentPortal,
-      desc: 'Attendance, report cards, fees & teacher chats',
+      desc: d.portals.parentDesc || 'Attendance, report cards, fees & teacher chats',
       path: '/parent/login',
       icon: <Users className="w-4 h-4 text-amber-500" />,
     },
     {
       title: d.common.teacherPortal,
-      desc: 'Class attendance, gradebooks & assignments',
+      desc: d.portals.teacherDesc || 'Class attendance, gradebooks & assignments',
       path: '/teacher/login',
       icon: <Briefcase className="w-4 h-4 text-blue-500" />,
     },
     {
       title: d.common.studentPortal,
-      desc: 'Timetables, homework & achievements',
+      desc: d.portals.studentDesc || 'Timetables, homework & achievements',
       path: '/student/login',
       icon: <GraduationCap className="w-4 h-4 text-emerald-500" />,
     },
@@ -144,7 +144,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 font-medium cursor-pointer"
               >
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Admin Dashboard</span>
+                <span>{d.nav.adminDashboard || 'Admin Dashboard'}</span>
               </button>
             ) : (
               <button
@@ -153,7 +153,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className="flex items-center gap-1 text-slate-400 hover:text-amber-300 transition-colors cursor-pointer"
               >
                 <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Admin</span>
+                <span>{d.nav.admin || 'Admin'}</span>
               </button>
             )}
           </div>
@@ -177,7 +177,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div className="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-white p-0.5 shadow-sm border border-slate-200 group-hover:scale-105 transition-transform duration-150 shrink-0 overflow-hidden flex items-center justify-center">
                 <img
                   src={settings?.logoUrl || '/logo.png'}
-                  alt="Albright Academy Logo"
+                  alt={d.common.schoolName}
                   className="w-full h-full object-contain rounded-full"
                   referrerPolicy="no-referrer"
                 />
@@ -187,7 +187,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   {d.common.schoolName}
                 </span>
                 <span className="block text-[11px] font-semibold text-amber-600 tracking-wider uppercase -mt-0.5">
-                  Center of Excellence & Innovation
+                  {d.common.centerOfExcellence || 'Center of Excellence & Innovation'}
                 </span>
               </div>
             </button>
@@ -223,7 +223,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       : 'text-slate-600 hover:text-[#0f2444] hover:bg-slate-50'
                   }`}
                 >
-                  <span>More</span>
+                  <span>{d.nav.more || 'More'}</span>
                   <ChevronDown className="w-3.5 h-3.5" />
                 </button>
 
@@ -268,10 +268,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-slate-200 p-2 z-50 animate-in fade-in zoom-in-95 duration-100 space-y-1">
                     <div className="px-3 py-2 border-b border-slate-100">
                       <div className="text-xs font-bold text-slate-900">
-                        Albright Information Portals
+                        {d.portals.loginHeadline}
                       </div>
                       <p className="text-[11px] text-slate-500">
-                        Select your school role to sign in
+                        {d.portals.loginSubheadline}
                       </p>
                     </div>
                     {portalLinks.map((p) => (
@@ -337,7 +337,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="xl:hidden border-t border-slate-200 bg-white shadow-xl animate-in slide-in-from-top-2 duration-150 max-h-[85vh] overflow-y-auto">
             {/* Mobile Language Switcher */}
             <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-600">Select Language:</span>
+              <span className="text-xs font-bold text-slate-600">{d.footer.languageLabel || 'Language:'}</span>
               <LanguageSwitcher variant="light" />
             </div>
 
@@ -364,26 +364,26 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Portals in Mobile */}
               <div className="pt-4 border-t border-slate-200 space-y-2">
                 <div className="text-xs font-bold text-slate-400 uppercase tracking-wider px-2">
-                  School Portals
+                  {d.nav.portals}
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     onClick={() => handleNavClick('/parent/login')}
                     className="p-2 rounded-lg bg-amber-50 text-amber-900 border border-amber-200 text-xs font-bold text-center"
                   >
-                    Parent
+                    {d.portals.parentTitle}
                   </button>
                   <button
                     onClick={() => handleNavClick('/teacher/login')}
                     className="p-2 rounded-lg bg-blue-50 text-blue-900 border border-blue-200 text-xs font-bold text-center"
                   >
-                    Teacher
+                    {d.portals.teacherTitle}
                   </button>
                   <button
                     onClick={() => handleNavClick('/student/login')}
                     className="p-2 rounded-lg bg-emerald-50 text-emerald-900 border border-emerald-200 text-xs font-bold text-center"
                   >
-                    Student
+                    {d.portals.studentTitle}
                   </button>
                 </div>
 
@@ -404,7 +404,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onClick={() => handleNavClick('/admin/login')}
                   className="w-full text-center py-2 text-xs font-semibold text-slate-500 hover:text-slate-900 cursor-pointer"
                 >
-                  Admin Portal Login
+                  {d.common.adminPortal}
                 </button>
               </div>
             </div>

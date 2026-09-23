@@ -70,7 +70,7 @@ export const Footer: React.FC<FooterProps> = ({ navigate, settings }) => {
                   {d.common.schoolName}
                 </h3>
                 <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider">
-                  KG1 – Grade 8 • Center of Excellence and Innovation
+                  {d.footer.accreditedSubtitle || d.common.schoolTagline}
                 </p>
               </div>
             </div>
@@ -80,7 +80,7 @@ export const Footer: React.FC<FooterProps> = ({ navigate, settings }) => {
 
             {/* Language Switcher in Footer */}
             <div className="pt-2 flex items-center gap-3">
-              <span className="text-xs text-slate-400 font-medium">Language:</span>
+              <span className="text-xs text-slate-400 font-medium">{d.footer.languageLabel || 'Language:'}</span>
               <LanguageSwitcher variant="dark" />
             </div>
 
@@ -199,7 +199,7 @@ export const Footer: React.FC<FooterProps> = ({ navigate, settings }) => {
                 className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-amber-300 transition-colors cursor-pointer"
               >
                 <Lock className="w-3.5 h-3.5" />
-                <span>Admin Login</span>
+                <span>{d.footer.adminLogin || 'Admin Login'}</span>
                 <ArrowUpRight className="w-3 h-3 opacity-60" />
               </button>
             </div>
@@ -210,8 +210,8 @@ export const Footer: React.FC<FooterProps> = ({ navigate, settings }) => {
         <div className="mt-14 pt-8 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-4">
           <p>© 2026 Albright Academy. {d.footer.allRightsReserved}</p>
           <div className="flex items-center space-x-6">
-            <span className="text-slate-400">Excellence • Integrity • Innovation</span>
-            <span>Accredited KG1 – Grade 8</span>
+            <span className="text-slate-400">{d.footer.taglineValues || 'Excellence • Integrity • Innovation'}</span>
+            <span>{d.footer.accreditedBadge || 'Accredited KG1 – Grade 8'}</span>
           </div>
         </div>
       </div>
