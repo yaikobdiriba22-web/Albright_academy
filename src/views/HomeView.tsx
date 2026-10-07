@@ -1,30 +1,8 @@
 import React from 'react';
-import {
-  ArrowRight,
-  Sparkles,
-  BookOpen,
-  Compass,
-  Cpu,
-  ShieldCheck,
-  HeartHandshake,
-  Lightbulb,
-  Calendar,
-  Clock,
-  MapPin,
-  ChevronRight,
-  GraduationCap,
-  Award,
-  Users,
-  CheckCircle,
-  Quote,
-} from 'lucide-react';
-import { SchoolSettings, NewsItem, SchoolEvent } from '../types/index.ts';
-import { Button } from '../components/ui/Button.tsx';
-import { SectionHeader } from '../components/ui/SectionHeader.tsx';
-import { useTranslation } from '../i18n/LanguageContext.tsx';
+import { ArrowRight, Award, BookOpen, CalendarDays, CheckCircle2, ChevronRight, Cpu, HeartHandshake, MapPin, Menu, ShieldCheck, Sparkles, Users } from 'lucide-react';
 import { motion } from 'motion/react';
-import { MovingBanner } from '../components/ui/MovingBanner.tsx';
-import { Hero } from '../components/home/Hero.tsx';
+import { SchoolSettings, NewsItem, SchoolEvent } from '../types/index.ts';
+import { useTranslation } from '../i18n/LanguageContext.tsx';
 
 interface HomeViewProps {
   navigate: (route: string) => void;
@@ -34,373 +12,185 @@ interface HomeViewProps {
   setSelectedNews: (news: NewsItem | null) => void;
 }
 
-export const HomeView: React.FC<HomeViewProps> = ({
-  navigate,
-  settings,
-  news,
-  events,
-  setSelectedNews,
-}) => {
-  const { d, language } = useTranslation();
+const imageSet = {
+  hero: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1800&q=85',
+  learning: 'https://images.unsplash.com/photo-1588072432836-e10032774350?auto=format&fit=crop&w=1200&q=85',
+  stem: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=1200&q=85',
+  students: 'https://images.unsplash.com/photo-1529390079861-591de354faf5?auto=format&fit=crop&w=1200&q=85',
+};
 
-  const academicPrograms = [
-    {
-      title: d.academics.earlyTitle,
-      subtitle: 'KG1 – KG2 (Ages 3–5)',
-      description: d.academics.earlySubtitle,
-      icon: <Sparkles className="w-6 h-6 text-amber-500" />,
-      tagColor: 'bg-amber-50 text-amber-900 border-amber-200',
-    },
-    {
-      title: d.academics.primaryTitle,
-      subtitle: 'Grades 1 – 4 (Ages 6–10)',
-      description: d.academics.primarySubtitle,
-      icon: <BookOpen className="w-6 h-6 text-blue-600" />,
-      tagColor: 'bg-blue-50 text-blue-900 border-blue-200',
-    },
-    {
-      title: d.academics.juniorTitle,
-      subtitle: 'Grades 5 – 8 (Ages 11–14)',
-      description: d.academics.juniorSubtitle,
-      icon: <Compass className="w-6 h-6 text-emerald-600" />,
-      tagColor: 'bg-emerald-50 text-emerald-900 border-emerald-200',
-    },
+export const HomeView: React.FC<HomeViewProps> = ({ navigate, settings, news, events, setSelectedNews }) => {
+  const { language } = useTranslation();
+  const isOm = language === 'om';
+  const isAm = language === 'am';
+
+  const copy = {
+    eyebrow: isAm ? 'የልቀት እና ፈጠራ ማዕከል' : isOm ? 'Gidduu Gala Gahumsa fi Kalaqaa' : 'CENTER OF EXCELLENCE & INNOVATION',
+    title: isAm ? 'የወደፊት ትውልድን እንገነባለን።' : isOm ? 'Dhaloota Boruu Ijaarra.' : 'Building Bright Minds. Shaping Future Leaders.',
+    subtitle: isAm ? 'ከKG1 እስከ 8ኛ ክፍል፣ ልጆች እንዲያስቡ፣ እንዲፈጥሩ እና በእምነት እንዲያድጉ የሚያግዝ ዘመናዊ ትምህርት።' : isOm ? 'KG1 irraa hanga Kutaa 8tti, barattoonni akka yaadan, akka kalaqan, fi ofitti amanamummaa qabaatanii akka guddatan ni deeggarra.' : 'A modern KG1–Grade 8 learning community where children are encouraged to think deeply, create boldly, and grow with confidence.',
+    apply: isAm ? 'ለመግቢያ ያመልክቱ' : isOm ? 'Galmee Barnootaaf Iyyadhu' : 'Apply for Admission',
+    explore: isAm ? 'አልብራይትን ያስሱ' : isOm ? 'Albright Daawwadhu' : 'Explore Albright',
+    aboutTitle: isAm ? 'ልጅዎ ከመማር በላይ ይማራል' : isOm ? 'Ilmi keessan barachuu caalaa ni barataa' : 'More than a school. A place to discover.',
+    aboutText: isAm ? 'አልብራይት አካዳሚ ትምህርትን፣ ባህሪን፣ ቴክኖሎጂን እና ደህንነትን በአንድ የተመጣጠነ የመማሪያ ልምድ ያጣምራል።' : isOm ? 'Albright Academy barnoota, amala gaarii, teeknooloojii fi nageenya muuxannoo barnootaa madaalawaa tokko keessatti walitti qaba.' : 'Albright Academy brings together strong academics, character, technology, creativity, and student wellbeing in one connected learning experience.',
+    programs: isAm ? 'የትምህርት መርሃ ግብሮች' : isOm ? 'Sagantaalee Barnootaa' : 'Learning Pathways',
+    news: isAm ? 'የቅርብ ጊዜ ዜና' : isOm ? 'Oduu Haaraa' : 'Latest from Albright',
+    events: isAm ? 'መጪ ዝግጅቶች' : isOm ? 'Sagantaalee Dhufan' : 'Upcoming Events',
+    portalTitle: isAm ? 'ቤተሰቦችን ከትምህርት ጋር እናገናኛለን' : isOm ? 'Maatii fi Barnoota Walitti Hidhuu' : 'Keep families connected to learning',
+    portalText: isAm ? 'ወላጆች፣ መምህራን እና ተማሪዎች ከየራሳቸው ፖርታል በኩል መረጃን በደህንነት ያገኛሉ።' : isOm ? 'Maatiin, barsiisotni fi barattootni poortaala isaanii irraa odeeffannoo barbaachisaa nageenyaan argatu.' : 'Parents, teachers, and students can securely access the information and tools they need through dedicated portals.',
+  };
+
+  const programs = [
+    { title: 'KG1 – KG2', label: 'Early Years', icon: Sparkles, color: 'amber', text: 'Play-based discovery, language, social growth, and early numeracy.' },
+    { title: 'Grades 1 – 4', label: 'Primary', icon: BookOpen, color: 'blue', text: 'Strong foundations in languages, mathematics, science, arts, and values.' },
+    { title: 'Grades 5 – 8', label: 'Junior School', icon: Cpu, color: 'emerald', text: 'Deeper inquiry, ICT, STEM, leadership, and independent learning.' },
   ];
 
-  const whyChooseCards = [
-    {
-      title: language === 'am' ? 'ብቁ እና ሩህሩህ መምህራን' : language === 'om' ? 'Barsiisota Gahumsa Qaban' : 'Certified & Dedicated Faculty',
-      desc: language === 'am' ? 'ለእያንዳንዱ ተማሪ ልዩ እንክብካቤ የሚሰጡ በሙያው የሰለጠኑ ልምድ ያካበቱ መምህራን።' : language === 'om' ? "Barsiisota dandeettii olaanaa qaban kanneen daa'imman hundaaf xiyyeeffannoo dhuunfaa kennan." : 'Experienced, background-checked educators dedicated to unlocking every child’s individual learning potential.',
-      icon: <Award className="w-6 h-6 text-amber-500" />,
-    },
-    {
-      title: language === 'am' ? 'ተግባራዊ ሳይንስ እና ሮቦቲክስ' : language === 'om' ? 'Saayinsii Hojiin Agarsiifamu fi STEM' : 'Hands-on STEM & Robotics',
-      desc: language === 'am' ? 'ተማሪዎችን ከልጅነታቸው ጀምሮ ለቴክኖሎጂ፣ ለኮዲንግና ለፈጠራ የሚያዘጋጁ ዘመናዊ ላቦራቶሪዎች።' : language === 'om' ? 'Laabii saayinsii fi koodingii barattoota kalaqaaf qopheessan.' : 'Modern laboratories where students learn coding, robotics, and experimental physics from an early age.',
-      icon: <Cpu className="w-6 h-6 text-indigo-600" />,
-    },
-    {
-      title: language === 'am' ? 'አስተማማኝና ምቹ የትምህርት ከባቢ' : language === 'om' ? 'Nageenya Eegame fi Naannoo Qulqulluu' : 'Safe & Nurturing Campus',
-      desc: language === 'am' ? 'በካሜራ ቁጥጥር ስር ያለ፣ የህጻናት ደህንነትና ስነ-ልቦናዊ ምቾት የተረጋገጠበት ግቢ።' : language === 'om' ? 'Nageenyi isaa eegamee fi miira nagaa barattootaaf kan uumu.' : 'Controlled campus access, child-safe playgrounds, first-aid nurses, and positive peer culture.',
-      icon: <ShieldCheck className="w-6 h-6 text-emerald-600" />,
-    },
-    {
-      title: language === 'am' ? 'የስነ-ምግባርና የአመራር ክህሎት' : language === 'om' ? 'Naamusa Cimaa fi Hoggansa' : 'Character & Leadership',
-      desc: language === 'am' ? 'ትጋት፣ ታማኝነት፣ አክብሮት እና የህብረተሰብ አገልግሎት እሴቶችን ከትምህርት ጎን ለጎን ማስተማር።' : language === 'om' ? 'Duudhaalee amala gaarii, kabaja fi itti-gaafatamummaa gabbisuu.' : 'Instilling integrity, mutual respect, civic responsibility, and active teamwork throughout all grades.',
-      icon: <HeartHandshake className="w-6 h-6 text-rose-500" />,
-    },
-    {
-      title: language === 'am' ? 'የተመጣጠነ የመማሪያ ክፍል ምጥጥን' : language === 'om' ? 'Reeshiyoo Madaalamaa (1:18)' : 'Optimal Ratio (1:18)',
-      desc: language === 'am' ? 'በአንድ ክፍል ውስጥ ዝቅተኛ የተማሪዎች ቁጥር በመያዝ ጥራት ያለው ትምህርት መስጠት።' : language === 'om' ? "Kutaa keessatti reeshiyoo barsiisaa fi barataa madaalamaa ta'e eeguu." : 'Low classroom sizes ensure teachers know each student closely and adapt to their pace.',
-      icon: <Users className="w-6 h-6 text-blue-600" />,
-    },
-    {
-      title: language === 'am' ? 'ቋንቋና ባህልን ማክበር' : language === 'om' ? 'Aadaa fi Afaan Gabbisuu' : 'Multilingual & Cultural Pride',
-      desc: language === 'am' ? 'እንግሊዝኛን በዋናነት እያስተማሩ የአማርኛና አፋን ኦሮሞ ቋንቋዎችንና ባህሎችን ማጎልበት።' : language === 'om' ? 'Afaan Ingilizii, Oromoo fi Amaaraa kabajuun tokkummaa ijaaruu.' : 'Balancing fluent English mastery with profound appreciation for Ethiopian languages and history.',
-      icon: <Lightbulb className="w-6 h-6 text-amber-600" />,
-    },
+  const pillars = [
+    { icon: Award, title: 'Academic Excellence', text: 'Clear learning goals, purposeful assessment, and support for every learner.' },
+    { icon: Cpu, title: 'Innovation & Technology', text: 'Technology and practical projects used to strengthen problem-solving and creativity.' },
+    { icon: HeartHandshake, title: 'Character & Values', text: 'Respect, responsibility, integrity, collaboration, and service are part of school life.' },
+    { icon: ShieldCheck, title: 'Safe & Caring', text: 'A welcoming environment designed around student wellbeing, safeguarding, and belonging.' },
   ];
-
-  const testimonials = [
-    {
-      quote: language === 'am' ? 'ልጆቼ በአልብራይት አካዳሚ መማር ከጀመሩ በኋላ በንባብ፣ በሂሳብ እና በራስ መተማመን ላይ ያሳዩት ለውጥ እጅግ አስደናቂ ነው። የመምህራኑ እንክብካቤ ወደር የለውም።' : language === 'om' ? "Ijoolleen koo Albright Academytti eega galanii guddinni isaan dubbisaa fi herrega irratti agarsiisan baay'ee na gammachiiseera. Barsiisonnis xiyyeeffannoo guddaa kennuuf." : 'The growth my children have experienced in reading fluency, mathematics, and creative confidence at Albright is extraordinary. The faculty’s genuine care is second to none.',
-      parent: 'Dr. Getachew Tadesse',
-      role: language === 'am' ? 'የ4ኛ እና ኬጂ2 ክፍል ተማሪዎች አባት' : language === 'om' ? 'Abbaa Barattoota Kutaa 4 fi KG2' : 'Parent of Grade 4 & KG2 Scholars',
-    },
-    {
-      quote: language === 'am' ? 'የትምህርት ቤቱ የሳይንስ ላቦራቶሪ፣ የኮዲንግ ትምህርት እና ንጹህ የመማሪያ ክፍሎች በከተማችን ካሉ ትምህርት ቤቶች ሁሉ የላቁ ናቸው።' : language === 'om' ? 'Laaboraatoriin saayinsii, koodingii fi qulqullinni kutaalee barumsaa Albright Academy iddoo guddaa qaba.' : 'The hands-on science lab experiments, robotics curriculum, and positive atmosphere made Albright our top choice for our daughter.',
-      parent: 'Mrs. Selamawit Bekele',
-      role: language === 'am' ? 'የ6ኛ ክፍል ተማሪ እናት' : language === 'om' ? 'Haadha Barataa Kutaa 6ffaa' : 'Parent of Grade 6 Scholar',
-    },
-  ];
-
-  const publishedNews = news.slice(0, 3);
-  const upcomingEvents = events.slice(0, 3);
 
   return (
-    <div className="flex flex-col min-h-screen">
-      {/* 1. HERO SECTION */}
-      <Hero navigate={navigate} settings={settings} />
-
-      {/* Dynamic Animated Ribbon: "Albright Academy — Center of Excellence and Innovation" (Configured by Admin) */}
-      <div className="relative z-20 shadow-md">
-        <MovingBanner variant="gold" showControls={true} settings={settings} />
-      </div>
-
-      {/* 2. ACADEMIC DIVISIONS SECTION */}
-      <section className="py-16 bg-white border-b border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionHeader
-            badge={d.home.programsTitle}
-            title={d.home.programsSubtitle}
-            description="Our structured educational pathways are tailored to foster foundational skills, scientific thinking, and character."
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {academicPrograms.map((program, idx) => (
-              <div
-                key={idx}
-                className="p-8 rounded-2xl bg-slate-50 border border-slate-200 hover:border-amber-400/80 hover:bg-white hover:shadow-xl transition-all duration-300 flex flex-col justify-between group"
-              >
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div className="p-3 rounded-xl bg-white shadow-xs border border-slate-100 group-hover:bg-amber-50 transition-colors">
-                      {program.icon}
-                    </div>
-                    <span className={`text-xs font-bold px-3 py-1 rounded-full border ${program.tagColor}`}>
-                      {program.subtitle}
-                    </span>
-                  </div>
-                  <h3 className="text-xl font-bold font-display text-slate-900 group-hover:text-[#0f2444] transition-colors">
-                    {program.title}
-                  </h3>
-                  <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                    {program.description}
-                  </p>
-                </div>
-
-                <div className="pt-6 mt-6 border-t border-slate-200/80">
-                  <button
-                    onClick={() => navigate('/academics')}
-                    className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-600 hover:text-amber-700 cursor-pointer"
-                  >
-                    <span>{d.common.learnMore}</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 3. WHY CHOOSE ALBRIGHT ACADEMY */}
-      <section className="py-20 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionHeader
-            badge={d.home.whyChooseTitle}
-            title={d.home.whyChooseSubtitle}
-            description="Providing young learners with an empowering environment that cultivates academic excellence and integrity."
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {whyChooseCards.map((card, idx) => (
-              <div
-                key={idx}
-                className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all duration-200 space-y-3"
-              >
-                <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center">
-                  {card.icon}
-                </div>
-                <h4 className="text-base font-bold text-slate-900 font-display">
-                  {card.title}
-                </h4>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  {card.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 4. CAMPUS FACILITIES & STUDENT LIFE PREVIEW */}
-      <section className="py-20 bg-white border-y border-slate-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Facilities Box */}
-            <div className="space-y-6">
-              <span className="px-3.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-amber-100 text-amber-900">
-                {d.home.facilitiesTitle}
-              </span>
-              <h3 className="text-2xl sm:text-3xl font-black text-slate-900 font-display">
-                {d.home.facilitiesSubtitle}
-              </h3>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                From fiber-connected computer labs and child-safe experimental science stations to our trilingual library and outdoor athletics field.
-              </p>
-              <div className="grid grid-cols-2 gap-3 text-xs font-medium text-slate-700">
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-emerald-500" />
-                  <span>Interactive Smart Classrooms</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-emerald-500" />
-                  <span>Experimental Science Lab</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-emerald-500" />
-                  <span>Coding & Robotics Hub</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle className="w-4 h-4 text-emerald-500" />
-                  <span>Safe School Transportation</span>
-                </div>
-              </div>
-              <div>
-                <Button
-                  variant="primary"
-                  onClick={() => navigate('/facilities')}
-                  icon={<ArrowRight className="w-4 h-4" />}
-                >
-                  Tour All Facilities
-                </Button>
-              </div>
+    <div className="bg-[#f7f9fc] overflow-hidden">
+      <section className="relative min-h-[760px] flex items-center">
+        <img src={imageSet.hero} alt="Students learning at Albright Academy" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(4,18,38,.94),rgba(4,18,38,.76),rgba(4,18,38,.18))]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#071a32] via-transparent to-transparent" />
+        <div className="relative z-10 max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-24 w-full">
+          <div className="max-w-3xl">
+            <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 backdrop-blur px-4 py-2 text-xs font-bold tracking-[.18em] text-amber-300">
+              <Sparkles className="w-4 h-4" /> {copy.eyebrow}
+            </motion.div>
+            <motion.h1 initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .08 }} className="mt-7 text-5xl sm:text-6xl lg:text-7xl font-black tracking-[-.045em] text-white leading-[.98] font-display">
+              {copy.title}
+            </motion.h1>
+            <motion.p initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: .16 }} className="mt-7 text-lg sm:text-xl leading-8 text-slate-200 max-w-2xl">
+              {copy.subtitle}
+            </motion.p>
+            <div className="mt-9 flex flex-wrap gap-3">
+              <button onClick={() => navigate('/admissions')} className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-6 py-3.5 text-sm font-black text-[#071a32] shadow-xl hover:bg-amber-300 transition">
+                {copy.apply}<ArrowRight className="w-4 h-4" />
+              </button>
+              <button onClick={() => navigate('/about')} className="inline-flex items-center gap-2 rounded-xl border border-white/30 bg-white/10 backdrop-blur px-6 py-3.5 text-sm font-bold text-white hover:bg-white/20 transition">
+                {copy.explore}<ChevronRight className="w-4 h-4" />
+              </button>
             </div>
+            <div className="mt-12 flex flex-wrap gap-6 text-sm text-white/90">
+              <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-amber-300" /> KG1 – Grade 8</span>
+              <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-amber-300" /> Technology-forward learning</span>
+              <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-amber-300" /> Family partnership</span>
+            </div>
+          </div>
+        </div>
+        <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-[#f7f9fc] to-transparent" />
+      </section>
 
-            {/* Student Life Box */}
-            <div className="space-y-6 bg-slate-50 p-8 rounded-2xl border border-slate-200">
-              <span className="px-3.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-blue-100 text-blue-900">
-                {d.home.studentLifeTitle}
-              </span>
-              <h3 className="text-2xl sm:text-3xl font-black text-slate-900 font-display">
-                {d.home.studentLifeSubtitle}
-              </h3>
-              <p className="text-sm text-slate-600 leading-relaxed">
-                Nurturing balanced individuals through over 15 after-school clubs, youth sports leagues, national spelling bees, robotics olympiads, and cultural celebrations.
-              </p>
-              <div>
-                <Button
-                  variant="outline"
-                  onClick={() => navigate('/student-life')}
-                  icon={<ArrowRight className="w-4 h-4" />}
-                >
-                  Explore Student Life
-                </Button>
+      <section className="relative z-10 -mt-10 max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {programs.map((p, i) => {
+            const Icon = p.icon;
+            return <motion.button key={p.title} initial={{ opacity: 0, y: 18 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * .06 }} onClick={() => navigate('/academics')} className="text-left bg-white/95 backdrop-blur rounded-2xl border border-slate-200 p-6 shadow-[0_20px_60px_rgba(15,36,68,.10)] hover:-translate-y-1 transition group">
+              <div className="flex items-start justify-between">
+                <span className="w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center"><Icon className="w-5 h-5 text-[#0f2444]" /></span>
+                <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-amber-500 transition" />
               </div>
+              <div className="mt-5 text-xs font-black uppercase tracking-[.16em] text-amber-600">{p.label}</div>
+              <h3 className="mt-1 text-xl font-black text-[#0f2444]">{p.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-500">{p.text}</p>
+            </motion.button>;
+          })}
+        </div>
+      </section>
+
+      <section className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-24">
+        <div className="grid lg:grid-cols-12 gap-10 items-center">
+          <div className="lg:col-span-7">
+            <span className="text-xs font-black tracking-[.18em] uppercase text-amber-600">ALBRIGHT ACADEMY</span>
+            <h2 className="mt-3 text-4xl sm:text-5xl font-black tracking-tight text-[#0f2444] font-display">{copy.aboutTitle}</h2>
+            <p className="mt-6 text-lg leading-8 text-slate-600 max-w-2xl">{copy.aboutText}</p>
+            <div className="mt-8 grid sm:grid-cols-2 gap-3">
+              {pillars.map((p) => { const Icon = p.icon; return <div key={p.title} className="rounded-2xl border border-slate-200 bg-white p-5"><Icon className="w-5 h-5 text-amber-500" /><h3 className="mt-3 font-black text-[#0f2444]">{p.title}</h3><p className="mt-1 text-sm leading-6 text-slate-500">{p.text}</p></div>; })}
+            </div>
+          </div>
+          <div className="lg:col-span-5 relative">
+            <div className="rounded-[2rem] overflow-hidden shadow-2xl border-8 border-white">
+              <img src={imageSet.learning} alt="Students learning together" className="w-full aspect-[4/5] object-cover" />
+            </div>
+            <div className="absolute -bottom-6 -left-4 sm:-left-8 bg-[#0f2444] text-white rounded-2xl px-6 py-5 shadow-2xl max-w-xs">
+              <div className="text-amber-300 text-xs font-black uppercase tracking-widest">Our promise</div>
+              <div className="mt-1 font-bold leading-6">Every learner deserves to be known, supported, and challenged.</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 5. PARENT TESTIMONIALS */}
-      <section className="py-20 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <SectionHeader
-            badge={d.home.testimonialsTitle}
-            title={d.home.testimonialsSubtitle}
-            description="Hear authentic reflections from parents whose children flourish in our classrooms."
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {testimonials.map((t, idx) => (
-              <div
-                key={idx}
-                className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm relative space-y-4"
-              >
-                <Quote className="w-10 h-10 text-amber-200 absolute top-6 right-6 opacity-60" />
-                <p className="text-sm text-slate-700 italic leading-relaxed relative z-10">
-                  “{t.quote}”
-                </p>
-                <div className="pt-4 border-t border-slate-100">
-                  <div className="font-bold text-slate-900 text-sm font-display">
-                    {t.parent}
-                  </div>
-                  <div className="text-xs text-amber-600 font-semibold mt-0.5">
-                    {t.role}
-                  </div>
-                </div>
-              </div>
-            ))}
+      <section className="bg-[#0b203b] text-white">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-24">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <span className="text-xs font-black tracking-[.18em] text-amber-300 uppercase">LEARNING IN ACTION</span>
+              <h2 className="mt-3 text-4xl sm:text-5xl font-black font-display">{copy.programs}</h2>
+              <p className="mt-5 text-slate-300 leading-7 max-w-xl">From joyful early learning to independent inquiry, our pathways are designed to build strong foundations and confidence for the next stage.</p>
+              <button onClick={() => navigate('/academics')} className="mt-7 inline-flex items-center gap-2 text-sm font-black text-amber-300 hover:text-amber-200">View academic programs <ArrowRight className="w-4 h-4" /></button>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <img src={imageSet.stem} alt="Science learning" className="rounded-3xl aspect-square object-cover" />
+              <img src={imageSet.students} alt="Students collaborating" className="rounded-3xl aspect-square object-cover sm:mt-10" />
+            </div>
           </div>
         </div>
       </section>
 
-      {/* 6. LATEST NEWS & UPCOMING EVENTS */}
-      {(publishedNews.length > 0 || upcomingEvents.length > 0) && (
-        <section className="py-20 bg-white border-t border-slate-100">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-wrap items-center justify-between gap-4 mb-10">
-              <div>
-                <span className="text-xs font-bold text-amber-600 uppercase tracking-wider">
-                  {d.home.newsTitle}
-                </span>
-                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 font-display mt-1">
-                  {d.home.newsSubtitle}
-                </h2>
-              </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/news')}
-                icon={<ArrowRight className="w-4 h-4" />}
-              >
-                {d.common.viewAll}
-              </Button>
-            </div>
+      <section className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-24">
+        <div className="flex items-end justify-between gap-6 mb-8">
+          <div><span className="text-xs font-black tracking-[.18em] uppercase text-amber-600">{copy.news}</span><h2 className="mt-2 text-4xl font-black text-[#0f2444] font-display">What’s happening at Albright</h2></div>
+          <button onClick={() => navigate('/news')} className="hidden sm:flex items-center gap-2 text-sm font-black text-[#0f2444]">All news <ArrowRight className="w-4 h-4" /></button>
+        </div>
+        <div className="grid md:grid-cols-3 gap-5">
+          {news.slice(0, 3).map((item) => <article key={item.id} className="bg-white rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-xl transition">
+            <img src={item.imageUrl} alt={item.title} className="w-full aspect-[16/9] object-cover" />
+            <div className="p-5"><div className="text-[11px] font-black uppercase tracking-widest text-amber-600">{item.author || 'Albright Academy'}</div><h3 className="mt-2 text-lg font-black text-[#0f2444] line-clamp-2">{item.title}</h3><p className="mt-2 text-sm leading-6 text-slate-500 line-clamp-3">{item.summary}</p><button onClick={() => { setSelectedNews(item); navigate('/news'); }} className="mt-4 inline-flex items-center gap-1 text-sm font-black text-[#0f2444]">Read story <ArrowRight className="w-4 h-4" /></button></div>
+          </article>)}
+        </div>
+      </section>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {publishedNews.map((item) => (
-                <div
-                  key={item.id}
-                  onClick={() => {
-                    setSelectedNews(item);
-                    navigate('/news');
-                  }}
-                  className="bg-slate-50 rounded-2xl overflow-hidden border border-slate-200 hover:shadow-lg transition-all duration-200 cursor-pointer flex flex-col justify-between"
-                >
-                  <div className="h-44 overflow-hidden bg-slate-200">
-                    <img
-                      src={item.imageUrl || 'https://images.unsplash.com/photo-1546410531-bb4caa6b424d?auto=format&fit=crop&w=800&q=80'}
-                      alt={item.title}
-                      className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-                  <div className="p-5 flex-1 flex flex-col justify-between space-y-2">
-                    <div>
-                      <span className="text-[11px] font-bold text-amber-600 uppercase">
-                        {item.category || 'School News'}
-                      </span>
-                      <h4 className="text-base font-bold text-slate-900 line-clamp-2 mt-1">
-                        {item.title}
-                      </h4>
-                      <p className="text-xs text-slate-500 line-clamp-2 mt-1">
-                        {item.summary}
-                      </p>
-                    </div>
-                    <div className="pt-3 border-t border-slate-200/60 text-xs text-slate-400 flex items-center justify-between">
-                      <span>{item.publishedAt}</span>
-                      <span className="text-amber-600 font-bold">{d.common.readMore} →</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+      <section className="bg-white border-y border-slate-200">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-24">
+          <div className="flex items-end justify-between gap-6 mb-8">
+            <div><span className="text-xs font-black tracking-[.18em] uppercase text-amber-600">{copy.events}</span><h2 className="mt-2 text-4xl font-black text-[#0f2444] font-display">Plan ahead with our school calendar</h2></div>
+            <button onClick={() => navigate('/events')} className="hidden sm:flex items-center gap-2 text-sm font-black text-[#0f2444]">View calendar <ArrowRight className="w-4 h-4" /></button>
+          </div>
+          <div className="grid lg:grid-cols-3 gap-4">
+            {events.slice(0, 3).map((event) => <button key={event.id} onClick={() => navigate('/events')} className="text-left rounded-2xl border border-slate-200 p-5 hover:border-amber-300 hover:shadow-lg transition">
+              <div className="flex items-center gap-3 text-amber-600"><CalendarDays className="w-5 h-5" /><span className="text-xs font-black uppercase tracking-widest">{event.date}</span></div>
+              <h3 className="mt-4 font-black text-[#0f2444]">{event.title}</h3>
+              <p className="mt-2 text-sm text-slate-500 line-clamp-2">{event.description}</p>
+              <div className="mt-4 text-xs text-slate-400 flex items-center gap-2"><MapPin className="w-3.5 h-3.5" />{event.location}</div>
+            </button>)}
+          </div>
+        </div>
+      </section>
+
+      <section className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-24">
+        <div className="rounded-[2rem] bg-gradient-to-br from-[#0f2444] to-[#173e6d] p-8 sm:p-12 lg:p-16 text-white relative overflow-hidden">
+          <div className="absolute -right-24 -top-24 w-72 h-72 rounded-full bg-amber-300/10 blur-3xl" />
+          <div className="relative grid lg:grid-cols-12 gap-10 items-center">
+            <div className="lg:col-span-8"><span className="text-xs font-black uppercase tracking-[.18em] text-amber-300">FAMILY PORTALS</span><h2 className="mt-3 text-4xl sm:text-5xl font-black font-display">{copy.portalTitle}</h2><p className="mt-5 max-w-2xl text-slate-300 leading-7">{copy.portalText}</p></div>
+            <div className="lg:col-span-4 flex flex-col sm:flex-row lg:flex-col gap-3">
+              <button onClick={() => navigate('/parent/login')} className="rounded-xl bg-amber-400 px-5 py-3.5 text-sm font-black text-[#071a32] hover:bg-amber-300 transition">Parent Portal</button>
+              <button onClick={() => navigate('/teacher/login')} className="rounded-xl border border-white/20 bg-white/10 px-5 py-3.5 text-sm font-black text-white hover:bg-white/15 transition">Teacher Portal</button>
+              <button onClick={() => navigate('/student/login')} className="rounded-xl border border-white/20 bg-white/10 px-5 py-3.5 text-sm font-black text-white hover:bg-white/15 transition">Student Portal</button>
             </div>
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
-      {/* 7. FINAL CALL TO ACTION BANNER */}
-      <section className="bg-gradient-to-r from-[#071324] via-[#0f2444] to-[#142d54] text-white py-16">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
-          <span className="px-3.5 py-1 text-xs font-bold uppercase tracking-wider rounded-full bg-amber-400/20 text-amber-300 border border-amber-400/30">
-            {d.common.admissionsOpenBadge}
-          </span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold font-display text-white">
-            {d.home.ctaHeading}
-          </h2>
-          <p className="text-base text-slate-200 max-w-2xl mx-auto leading-relaxed">
-            {d.home.ctaSubtitle}
-          </p>
-          <div className="pt-4 flex flex-wrap items-center justify-center gap-4">
-            <Button
-              id="cta-apply-btn"
-              variant="gold"
-              size="lg"
-              onClick={() => navigate('/admissions')}
-              icon={<ArrowRight className="w-5 h-5" />}
-            >
-              {d.common.applyNow}
-            </Button>
-            <Button
-              id="cta-contact-btn"
-              variant="outline"
-              size="lg"
-              onClick={() => navigate('/contact')}
-              className="text-white border-white/20 hover:bg-white/10"
-            >
-              {d.common.contactUs}
-            </Button>
-          </div>
+      <section className="bg-amber-400">
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10 py-14 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+          <div><div className="text-xs font-black uppercase tracking-[.18em] text-[#0f2444]/70">READY TO JOIN ALBRIGHT?</div><h2 className="mt-1 text-3xl font-black text-[#0f2444]">Start your child’s next chapter.</h2></div>
+          <button onClick={() => navigate('/admissions')} className="inline-flex items-center gap-2 rounded-xl bg-[#0f2444] text-white px-6 py-3.5 font-black text-sm hover:bg-[#173e6d] transition">{copy.apply}<ArrowRight className="w-4 h-4" /></button>
         </div>
       </section>
     </div>
