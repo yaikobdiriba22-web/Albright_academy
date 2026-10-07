@@ -1,22 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-import {
-  GraduationCap,
-  Menu,
-  X,
-  Phone,
-  Mail,
-  ShieldCheck,
-  ChevronRight,
-  ArrowRight,
-  Users,
-  Briefcase,
-  ChevronDown,
-} from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { ChevronDown, GraduationCap, Menu, ShieldCheck, X, Users, Briefcase, Phone, Mail, ArrowRight } from 'lucide-react';
 import { SchoolSettings } from '../../types/index.ts';
-import { Button } from '../ui/Button.tsx';
 import { LanguageSwitcher } from '../ui/LanguageSwitcher.tsx';
 import { useTranslation } from '../../i18n/LanguageContext.tsx';
-import { MovingBanner } from '../ui/MovingBanner.tsx';
 
 interface NavbarProps {
   currentRoute: string;
@@ -25,395 +11,94 @@ interface NavbarProps {
   isAdminLoggedIn?: boolean;
 }
 
-export const Navbar: React.FC<NavbarProps> = ({
-  currentRoute,
-  navigate,
-  settings,
-  isAdminLoggedIn = false,
-}) => {
+export const Navbar: React.FC<NavbarProps> = ({ currentRoute, navigate, settings, isAdminLoggedIn = false }) => {
   const { d } = useTranslation();
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [portalsDropdownOpen, setPortalsDropdownOpen] = useState(false);
-  const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [portalOpen, setPortalOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const onScroll = () => setScrolled(window.scrollY > 18);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Close dropdowns on outside click
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setPortalsDropdownOpen(false);
-        setMoreDropdownOpen(false);
+    const close = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setPortalOpen(false); setMoreOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
   }, []);
 
-  const primaryNavLinks = [
-    { label: d.nav.home, path: '/' },
-    { label: d.nav.about, path: '/about' },
-    { label: d.nav.academics, path: '/academics' },
-    { label: d.nav.admissions, path: '/admissions' },
-    { label: d.nav.teachers, path: '/teachers' },
-    { label: d.nav.facilities, path: '/facilities' },
-    { label: d.nav.studentLife, path: '/student-life' },
+  const primary = [
+    [d.nav.home, '/'], [d.nav.about, '/about'], [d.nav.academics, '/academics'],
+    [d.nav.admissions, '/admissions'], [d.nav.teachers, '/teachers'], [d.nav.facilities, '/facilities'],
+  ];
+  const more = [
+    [d.nav.studentLife, '/student-life'], [d.nav.gallery, '/gallery'], [d.nav.news, '/news'],
+    [d.nav.events, '/events'], [d.nav.faq, '/faq'], [d.nav.contact, '/contact'],
   ];
 
-  const secondaryNavLinks = [
-    { label: d.nav.gallery, path: '/gallery' },
-    { label: d.nav.news, path: '/news' },
-    { label: d.nav.events, path: '/events' },
-    { label: d.nav.faq, path: '/faq' },
-    { label: d.nav.contact, path: '/contact' },
-  ];
-
-  const portalLinks = [
-    {
-      title: d.common.parentPortal,
-      desc: d.portals.parentDesc || 'Attendance, report cards, fees & teacher chats',
-      path: '/parent/login',
-      icon: <Users className="w-4 h-4 text-amber-500" />,
-    },
-    {
-      title: d.common.teacherPortal,
-      desc: d.portals.teacherDesc || 'Class attendance, gradebooks & assignments',
-      path: '/teacher/login',
-      icon: <Briefcase className="w-4 h-4 text-blue-500" />,
-    },
-    {
-      title: d.common.studentPortal,
-      desc: d.portals.studentDesc || 'Timetables, homework & achievements',
-      path: '/student/login',
-      icon: <GraduationCap className="w-4 h-4 text-emerald-500" />,
-    },
-  ];
-
-  const handleNavClick = (path: string) => {
-    navigate(path);
-    setMobileMenuOpen(false);
-    setPortalsDropdownOpen(false);
-    setMoreDropdownOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const go = (path: string) => {
+    navigate(path); setMobileOpen(false); setPortalOpen(false); setMoreOpen(false);
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full transition-all duration-200">
-      {/* Top Utility Bar with Language Switcher and Contact Info */}
-      <div className="hidden md:block bg-[#071324] text-slate-300 text-xs py-2 px-4 sm:px-6 lg:px-8 border-b border-slate-800">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          {/* Left: Contact Info & Tagline */}
-          <div className="flex items-center space-x-6">
-            <a
-              href={`tel:${settings?.phone || '0923014132'}`}
-              className="flex items-center gap-1.5 hover:text-white transition-colors"
-            >
-              <Phone className="w-3.5 h-3.5 text-amber-400" />
-              <span>{settings?.phone || '0923014132'}</span>
-            </a>
-            <a
-              href={`mailto:${settings?.email || 'dinigaatrading@gmail.com'}`}
-              className="flex items-center gap-1.5 hover:text-white transition-colors"
-            >
-              <Mail className="w-3.5 h-3.5 text-amber-400" />
-              <span>{settings?.email || 'dinigaatrading@gmail.com'}</span>
-            </a>
-            <div className="text-amber-400/90 font-medium hidden lg:inline">
-              {d.common.schoolTagline}
-            </div>
+    <header className="sticky top-0 z-50">
+      <div className="hidden md:block bg-[#071324] text-slate-300">
+        <div className="max-w-7xl mx-auto px-5 lg:px-10 h-9 flex items-center justify-between text-[11px]">
+          <div className="flex items-center gap-5">
+            <a href={`tel:${settings?.phone || ''}`} className="flex items-center gap-1.5 hover:text-white"><Phone className="w-3 h-3 text-amber-400" />{settings?.phone || 'Contact school'}</a>
+            <a href={`mailto:${settings?.email || ''}`} className="flex items-center gap-1.5 hover:text-white"><Mail className="w-3 h-3 text-amber-400" />{settings?.email || 'School email'}</a>
           </div>
-
-          {/* Right: Language Switcher and Admin Link */}
-          <div className="flex items-center space-x-4">
-            <LanguageSwitcher variant="dark" />
-
-            <div className="h-4 w-px bg-slate-700" />
-
-            {isAdminLoggedIn ? (
-              <button
-                id="top-admin-dashboard-btn"
-                onClick={() => handleNavClick('/admin/dashboard')}
-                className="flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 font-medium cursor-pointer"
-              >
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>{d.nav.adminDashboard || 'Admin Dashboard'}</span>
-              </button>
-            ) : (
-              <button
-                id="top-admin-login-btn"
-                onClick={() => handleNavClick('/admin/login')}
-                className="flex items-center gap-1 text-slate-400 hover:text-amber-300 transition-colors cursor-pointer"
-              >
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>{d.nav.admin || 'Admin'}</span>
-              </button>
-            )}
-          </div>
+          <div className="flex items-center gap-4"><span className="text-amber-300 font-semibold">{d.common.schoolTagline}</span><LanguageSwitcher variant="dark" /><span className="h-4 w-px bg-slate-700" /><button onClick={() => go('/admin/login')} className="hover:text-amber-300 flex items-center gap-1"><ShieldCheck className="w-3 h-3" />{isAdminLoggedIn ? 'Dashboard' : 'Admin'}</button></div>
         </div>
       </div>
-
-      {/* Main Navigation Bar */}
-      <nav
-        className={`w-full bg-white transition-shadow duration-200 ${
-          isScrolled ? 'shadow-md border-b border-slate-200' : 'border-b border-slate-100'
-        }`}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
-            {/* Logo / Brand */}
-            <button
-              id="navbar-brand-logo"
-              onClick={() => handleNavClick('/')}
-              className="flex items-center gap-3 text-left group cursor-pointer focus:outline-none shrink-0"
-            >
-              <div className="w-12 h-12 sm:w-13 sm:h-13 rounded-full bg-white p-0.5 shadow-sm border border-slate-200 group-hover:scale-105 transition-transform duration-150 shrink-0 overflow-hidden flex items-center justify-center">
-                <img
-                  src={settings?.logoUrl || '/logo.png'}
-                  alt={d.common.schoolName}
-                  className="w-full h-full object-contain rounded-full"
-                  referrerPolicy="no-referrer"
-                />
-              </div>
-              <div>
-                <span className="block text-lg sm:text-xl font-black tracking-tight text-[#0f2444] font-display">
-                  {d.common.schoolName}
-                </span>
-                <span className="block text-[11px] font-semibold text-amber-600 tracking-wider uppercase -mt-0.5">
-                  {d.common.centerOfExcellence || 'Center of Excellence & Innovation'}
-                </span>
-              </div>
+      <nav className={`bg-white/95 backdrop-blur border-b transition-shadow ${scrolled ? 'shadow-lg border-slate-200' : 'border-slate-100'}`}>
+        <div className="max-w-7xl mx-auto px-5 sm:px-8 lg:px-10">
+          <div className="h-[76px] flex items-center justify-between gap-4">
+            <button onClick={() => go('/')} className="flex items-center gap-3 text-left shrink-0">
+              <span className="w-12 h-12 rounded-2xl bg-white border border-slate-200 shadow-sm p-1 flex items-center justify-center overflow-hidden"><img src={settings?.logoUrl || '/logo.png'} alt="Albright Academy" className="w-full h-full object-contain rounded-xl" /></span>
+              <span className="hidden sm:block"><span className="block text-lg font-black tracking-tight text-[#0f2444]">Albright Academy</span><span className="block text-[9px] font-black uppercase tracking-[.16em] text-amber-600">Center of Excellence & Innovation</span></span>
             </button>
 
-            {/* Desktop Navigation Links */}
-            <div className="hidden xl:flex items-center space-x-1" ref={dropdownRef}>
-              {primaryNavLinks.map((item) => {
-                const isActive = currentRoute === item.path;
-                return (
-                  <button
-                    key={item.path}
-                    id={`nav-link-${item.path.replace('/', '') || 'home'}`}
-                    onClick={() => handleNavClick(item.path)}
-                    className={`px-3 py-2 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
-                      isActive
-                        ? 'text-[#0f2444] bg-slate-100 font-extrabold shadow-2xs'
-                        : 'text-slate-600 hover:text-[#0f2444] hover:bg-slate-50'
-                    }`}
-                  >
-                    {item.label}
-                  </button>
-                );
-              })}
-
-              {/* More Dropdown (Gallery, News, Events, FAQ, Contact) */}
+            <div className="hidden xl:flex items-center gap-1" ref={menuRef}>
+              {primary.map(([label, path]) => <button key={path} onClick={() => go(path)} className={`px-3 py-2 rounded-lg text-xs font-bold transition ${currentRoute === path ? 'bg-slate-100 text-[#0f2444]' : 'text-slate-600 hover:bg-slate-50 hover:text-[#0f2444]'}`}>{label}</button>)}
               <div className="relative">
-                <button
-                  id="nav-more-dropdown-btn"
-                  onClick={() => setMoreDropdownOpen(!moreDropdownOpen)}
-                  className={`px-3 py-2 text-xs font-bold rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
-                    secondaryNavLinks.some((l) => l.path === currentRoute)
-                      ? 'text-[#0f2444] bg-slate-100 font-extrabold'
-                      : 'text-slate-600 hover:text-[#0f2444] hover:bg-slate-50'
-                  }`}
-                >
-                  <span>{d.nav.more || 'More'}</span>
-                  <ChevronDown className="w-3.5 h-3.5" />
-                </button>
-
-                {moreDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in zoom-in-95 duration-100">
-                    {secondaryNavLinks.map((item) => {
-                      const isActive = currentRoute === item.path;
-                      return (
-                        <button
-                          key={item.path}
-                          onClick={() => handleNavClick(item.path)}
-                          className={`w-full text-left px-4 py-2 text-xs font-medium transition-colors cursor-pointer ${
-                            isActive
-                              ? 'bg-amber-50 text-amber-900 font-bold'
-                              : 'text-slate-700 hover:bg-slate-50'
-                          }`}
-                        >
-                          {item.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+                <button onClick={() => setMoreOpen(v => !v)} className={`px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1 ${more.some(([,p]) => currentRoute === p) ? 'bg-slate-100 text-[#0f2444]' : 'text-slate-600 hover:bg-slate-50'}`}>More <ChevronDown className="w-3.5 h-3.5" /></button>
+                {moreOpen && <div className="absolute right-0 mt-2 w-52 rounded-2xl border border-slate-200 bg-white shadow-2xl p-2">{more.map(([label,path]) => <button key={path} onClick={() => go(path)} className="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-slate-700 hover:bg-amber-50 hover:text-[#0f2444]">{label}</button>)}</div>}
               </div>
             </div>
 
-            {/* Right Action CTAs: Portals & Apply Now */}
-            <div className="hidden sm:flex items-center space-x-3">
-              {/* Portals Button with Dropdown */}
-              <div className="relative">
-                <button
-                  id="nav-portals-btn"
-                  onClick={() => setPortalsDropdownOpen(!portalsDropdownOpen)}
-                  className="px-3.5 py-2 rounded-xl text-xs font-bold text-slate-700 hover:text-[#0f2444] bg-slate-100 hover:bg-slate-200 transition-colors flex items-center gap-1.5 cursor-pointer border border-slate-200/80"
-                >
-                  <Users className="w-3.5 h-3.5 text-amber-600" />
-                  <span>{d.nav.portals}</span>
-                  <ChevronDown className="w-3 h-3 text-slate-400" />
-                </button>
-
-                {portalsDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-slate-200 p-2 z-50 animate-in fade-in zoom-in-95 duration-100 space-y-1">
-                    <div className="px-3 py-2 border-b border-slate-100">
-                      <div className="text-xs font-bold text-slate-900">
-                        {d.portals.loginHeadline}
-                      </div>
-                      <p className="text-[11px] text-slate-500">
-                        {d.portals.loginSubheadline}
-                      </p>
-                    </div>
-                    {portalLinks.map((p) => (
-                      <button
-                        key={p.path}
-                        onClick={() => handleNavClick(p.path)}
-                        className="w-full text-left p-2.5 rounded-xl hover:bg-slate-50 transition-colors flex items-start gap-3 cursor-pointer group"
-                      >
-                        <div className="p-2 rounded-lg bg-slate-100 group-hover:bg-amber-50 transition-colors shrink-0">
-                          {p.icon}
-                        </div>
-                        <div>
-                          <div className="text-xs font-bold text-slate-900 group-hover:text-[#0f2444]">
-                            {p.title}
-                          </div>
-                          <div className="text-[11px] text-slate-500 leading-tight">
-                            {p.desc}
-                          </div>
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
+            <div className="hidden md:flex items-center gap-2">
+              <div className="relative" ref={menuRef}>
+                <button onClick={() => setPortalOpen(v => !v)} className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs font-black text-[#0f2444] hover:bg-slate-100"><Users className="w-4 h-4" /> Portals <ChevronDown className="w-3.5 h-3.5" /></button>
+                {portalOpen && <div className="absolute right-0 mt-2 w-72 rounded-2xl border border-slate-200 bg-white shadow-2xl p-2">
+                  {[['Parent Portal','/parent/login',Users],['Teacher Portal','/teacher/login',Briefcase],['Student Portal','/student/login',GraduationCap]].map(([label,path,Icon]: any) => <button key={path} onClick={() => go(path)} className="w-full flex items-center gap-3 p-3 rounded-xl text-left hover:bg-slate-50"><span className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center"><Icon className="w-4 h-4 text-[#0f2444]" /></span><span className="flex-1 text-xs font-black text-[#0f2444]">{label}</span><ArrowRight className="w-4 h-4 text-slate-300" /></button>)}
+                </div>}
               </div>
-
-              {/* Apply Now Primary Button */}
-              <Button
-                id="nav-apply-now-btn"
-                variant="gold"
-                size="md"
-                onClick={() => handleNavClick('/admissions')}
-                icon={<ArrowRight className="w-4 h-4" />}
-              >
-                {d.common.applyNow}
-              </Button>
+              <button onClick={() => go('/admissions')} className="rounded-xl bg-[#0f2444] px-4 py-2.5 text-xs font-black text-white hover:bg-[#173e6d] transition">Apply Now</button>
             </div>
 
-            {/* Mobile Controls */}
-            <div className="flex xl:hidden items-center space-x-2">
-              <Button
-                id="nav-apply-now-mobile-btn"
-                variant="gold"
-                size="sm"
-                className="text-xs px-2.5 py-1.5"
-                onClick={() => handleNavClick('/admissions')}
-              >
-                {d.common.applyNow}
-              </Button>
-              <button
-                id="nav-mobile-toggle-btn"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 rounded-lg text-slate-700 hover:bg-slate-100 focus:outline-none cursor-pointer"
-                aria-label="Toggle navigation menu"
-              >
-                {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-              </button>
-            </div>
+            <button onClick={() => setMobileOpen(v => !v)} className="md:hidden w-11 h-11 rounded-xl border border-slate-200 flex items-center justify-center text-[#0f2444]" aria-label="Toggle menu">{mobileOpen ? <X /> : <Menu />}</button>
           </div>
+
+          {mobileOpen && <div className="md:hidden pb-4 border-t border-slate-100 pt-3 space-y-1">
+            {[...primary, ...more].map(([label,path]) => <button key={path} onClick={() => go(path)} className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold ${currentRoute === path ? 'bg-amber-50 text-[#0f2444]' : 'text-slate-700 hover:bg-slate-50'}`}>{label}</button>)}
+            <div className="grid grid-cols-2 gap-2 pt-2">
+              <button onClick={() => go('/parent/login')} className="rounded-xl border border-slate-200 p-3 text-xs font-black text-[#0f2444]">Parent Portal</button>
+              <button onClick={() => go('/teacher/login')} className="rounded-xl border border-slate-200 p-3 text-xs font-black text-[#0f2444]">Teacher Portal</button>
+              <button onClick={() => go('/student/login')} className="rounded-xl border border-slate-200 p-3 text-xs font-black text-[#0f2444]">Student Portal</button>
+              <button onClick={() => go('/admissions')} className="rounded-xl bg-[#0f2444] p-3 text-xs font-black text-white">Apply Now</button>
+            </div>
+          </div>}
         </div>
-
-        {/* Mobile Dropdown Menu */}
-        {mobileMenuOpen && (
-          <div className="xl:hidden border-t border-slate-200 bg-white shadow-xl animate-in slide-in-from-top-2 duration-150 max-h-[85vh] overflow-y-auto">
-            {/* Mobile Language Switcher */}
-            <div className="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-600">{d.footer.languageLabel || 'Language:'}</span>
-              <LanguageSwitcher variant="light" />
-            </div>
-
-            <div className="px-4 pt-3 pb-6 space-y-1">
-              {[...primaryNavLinks, ...secondaryNavLinks].map((item) => {
-                const isActive = currentRoute === item.path;
-                return (
-                  <button
-                    key={item.path}
-                    id={`mobile-nav-${item.path.replace('/', '') || 'home'}`}
-                    onClick={() => handleNavClick(item.path)}
-                    className={`w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
-                      isActive
-                        ? 'bg-[#0f2444] text-white font-bold'
-                        : 'text-slate-700 hover:bg-slate-100'
-                    }`}
-                  >
-                    <span>{item.label}</span>
-                    <ChevronRight className="w-4 h-4 opacity-70" />
-                  </button>
-                );
-              })}
-
-              {/* Portals in Mobile */}
-              <div className="pt-4 border-t border-slate-200 space-y-2">
-                <div className="text-xs font-bold text-slate-400 uppercase tracking-wider px-2">
-                  {d.nav.portals}
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    onClick={() => handleNavClick('/parent/login')}
-                    className="p-2 rounded-lg bg-amber-50 text-amber-900 border border-amber-200 text-xs font-bold text-center"
-                  >
-                    {d.portals.parentTitle}
-                  </button>
-                  <button
-                    onClick={() => handleNavClick('/teacher/login')}
-                    className="p-2 rounded-lg bg-blue-50 text-blue-900 border border-blue-200 text-xs font-bold text-center"
-                  >
-                    {d.portals.teacherTitle}
-                  </button>
-                  <button
-                    onClick={() => handleNavClick('/student/login')}
-                    className="p-2 rounded-lg bg-emerald-50 text-emerald-900 border border-emerald-200 text-xs font-bold text-center"
-                  >
-                    {d.portals.studentTitle}
-                  </button>
-                </div>
-
-                <div className="pt-2">
-                  <Button
-                    id="mobile-nav-apply-full"
-                    variant="gold"
-                    size="lg"
-                    className="w-full"
-                    onClick={() => handleNavClick('/admissions')}
-                  >
-                    {d.common.applyNow}
-                  </Button>
-                </div>
-
-                <button
-                  id="mobile-nav-admin"
-                  onClick={() => handleNavClick('/admin/login')}
-                  className="w-full text-center py-2 text-xs font-semibold text-slate-500 hover:text-slate-900 cursor-pointer"
-                >
-                  {d.common.adminPortal}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </nav>
-
-      {/* Moving Marquee Ribbon: "Albright Academy — Center of Excellence and Innovation" (Configured by Admin) */}
-      <MovingBanner variant="dark" showControls={true} settings={settings} />
     </header>
   );
 };
