@@ -726,7 +726,7 @@ router.get('/admin/users', requireAdmin, (req: Request, res: Response) => {
   }
 
   // Return users with plainPasswordHint for admin management convenience
-  const safeUsers = users.map(({ passwordHash: _, ...user }) => user);
+  const safeUsers = users.map(({ passwordHash: _, plainPasswordHint: __, ...user }) => user);
   res.json({ users: safeUsers });
 });
 
@@ -767,8 +767,8 @@ router.post('/admin/users', requireAdmin, async (req: Request, res: Response) =>
     return;
   }
 
-  if (password.length < 6) {
-    res.status(400).json({ error: 'Password must be at least 6 characters.' });
+  if (password.length < 8) {
+    res.status(400).json({ error: 'Password must be at least 8 characters.' });
     return;
   }
 
@@ -776,8 +776,9 @@ router.post('/admin/users', requireAdmin, async (req: Request, res: Response) =>
   const db = getDb();
 
   // Check username uniqueness
+  const cleanEmail = email ? email.trim().toLowerCase() : undefined;
   const exists = db.portalUsers?.some(
-    (u) => u.username.toLowerCase() === cleanUsername
+    (u) => u.username.toLowerCase() === cleanUsername || (!!cleanEmail && !!u.email && u.email.toLowerCase() === cleanEmail)
   );
   if (exists) {
     res.status(409).json({ error: `Username "${cleanUsername}" is already taken. Please choose another.` });
@@ -791,11 +792,10 @@ router.post('/admin/users', requireAdmin, async (req: Request, res: Response) =>
     id: `usr-${cleanRole.toLowerCase()}-${Date.now()}`,
     fullName: fullName.trim(),
     username: cleanUsername,
-    email: email ? email.trim() : undefined,
+    email: cleanEmail,
     role: cleanRole,
     status: status === 'SUSPENDED' ? 'SUSPENDED' : 'ACTIVE',
     phone: phone ? phone.trim() : undefined,
-    plainPasswordHint: password,
     passwordHash,
     createdAt: now,
     updatedAt: now,
@@ -830,7 +830,7 @@ router.post('/admin/users', requireAdmin, async (req: Request, res: Response) =>
   saveDb(db);
 
   const roleTitle = cleanRole === 'TEACHER' ? 'Teacher' : cleanRole === 'PARENT' ? 'Parent' : 'Student';
-  const { passwordHash: _, ...safeUser } = newUser;
+  const { passwordHash: _, plainPasswordHint: __, ...safeUser } = newUser;
   res.status(201).json({
     message: `${roleTitle} user account created successfully.`,
     user: safeUser,
@@ -864,14 +864,13 @@ router.put('/admin/users/:id', requireAdmin, async (req: Request, res: Response)
     existingUser.username = cleanUsername;
   }
 
-  // If password changed, update hash and hint
+  // If password changed, update hash without ever storing the plaintext password
   if (updates.password && updates.password.trim()) {
-    if (updates.password.trim().length < 6) {
-      res.status(400).json({ error: 'Password must be at least 6 characters.' });
+    if (updates.password.trim().length < 8) {
+      res.status(400).json({ error: 'Password must be at least 8 characters.' });
       return;
     }
     existingUser.passwordHash = await hashPassword(updates.password.trim());
-    existingUser.plainPasswordHint = updates.password.trim();
   }
 
   // Update fields
@@ -901,7 +900,7 @@ router.put('/admin/users/:id', requireAdmin, async (req: Request, res: Response)
   existingUser.updatedAt = new Date().toISOString();
   saveDb(db);
 
-  const { passwordHash: _, ...safeUser } = existingUser;
+  const { passwordHash: _, plainPasswordHint: __, ...safeUser } = existingUser;
   res.json({ message: 'User updated successfully.', user: safeUser });
 });
 
