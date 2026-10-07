@@ -66,7 +66,7 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ portalUser }
 
   const totalAtt = attendances.length;
   const presentCount = attendances.filter((a) => a.status === 'Present').length;
-  const attRate = totalAtt > 0 ? Math.round((presentCount / totalAtt) * 100) : 100;
+  const attRate = totalAtt > 0 ? Math.round((presentCount / totalAtt) * 100) : 0;
 
   return (
     <div className="space-y-6">
@@ -78,13 +78,13 @@ export const StudentDashboard: React.FC<StudentDashboardProps> = ({ portalUser }
           </div>
           <div>
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-400/20 text-emerald-200 text-xs font-semibold mb-1">
-              <span>Active Scholar • Grade 4 Section B</span>
+              <span>Active Scholar • Student Portal</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-bold font-display text-white">
               {student?.fullName || portalUser?.fullName || 'Scholar Student'}
             </h2>
             <p className="text-xs text-slate-300">
-              ID: <span className="font-mono font-bold text-white">{student?.studentCode || 'ALB-STU-2026-001'}</span> • Guardian: {student?.guardianName || 'Dawit Bekele'}
+              ID: <span className="font-mono font-bold text-white">{student?.studentCode || '—'}</span> • Guardian: {student?.guardianName || '—'}
             </p>
           </div>
         </div>
