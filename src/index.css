@@ -5,13 +5,20 @@
     --font-sans: 'Plus Jakarta Sans', 'Noto Sans Ethiopic', 'Abyssinica SIL', system-ui, -apple-system, sans-serif;
     --font-serif: 'Playfair Display', 'Noto Sans Ethiopic', Georgia, serif;
   }
+  html { scroll-behavior: smooth; }
   body {
+    margin: 0;
     font-family: var(--font-sans);
     color: #0f172a;
-    background-color: #f8fafc;
+    background: #f7f9fc;
+    -webkit-font-smoothing: antialiased;
   }
-  .font-display {
-    font-family: var(--font-serif);
-  }
+  button, a { -webkit-tap-highlight-color: transparent; }
+  ::selection { background: #fbbf24; color: #071324; }
+  .font-display { font-family: var(--font-serif); }
 }
 
+@layer utilities {
+  .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+}
