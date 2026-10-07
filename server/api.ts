@@ -726,7 +726,7 @@ router.get('/admin/users', requireAdmin, (req: Request, res: Response) => {
   }
 
   // Return users with plainPasswordHint for admin management convenience
-  const safeUsers = users.map(({ passwordHash: _, plainPasswordHint: __, ...user }) => user);
+  const safeUsers = users.map(({ passwordHash: _, ...user }) => user);
   res.json({ users: safeUsers });
 });
 
@@ -830,7 +830,7 @@ router.post('/admin/users', requireAdmin, async (req: Request, res: Response) =>
   saveDb(db);
 
   const roleTitle = cleanRole === 'TEACHER' ? 'Teacher' : cleanRole === 'PARENT' ? 'Parent' : 'Student';
-  const { passwordHash: _, plainPasswordHint: __, ...safeUser } = newUser;
+  const { passwordHash: _, ...safeUser } = newUser;
   res.status(201).json({
     message: `${roleTitle} user account created successfully.`,
     user: safeUser,
@@ -900,7 +900,7 @@ router.put('/admin/users/:id', requireAdmin, async (req: Request, res: Response)
   existingUser.updatedAt = new Date().toISOString();
   saveDb(db);
 
-  const { passwordHash: _, plainPasswordHint: __, ...safeUser } = existingUser;
+  const { passwordHash: _, ...safeUser } = existingUser;
   res.json({ message: 'User updated successfully.', user: safeUser });
 });
 
