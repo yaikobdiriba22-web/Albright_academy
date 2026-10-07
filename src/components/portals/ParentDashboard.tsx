@@ -48,7 +48,7 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ portalUser }) 
   // Payment Form
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedFeeId, setSelectedFeeId] = useState('');
-  const [paymentAmount, setPaymentAmount] = useState(12000);
+  const [paymentAmount, setPaymentAmount] = useState<number | ''>('');
   const [paymentMethod, setPaymentMethod] = useState<'Telebirr' | 'CBE Birr' | 'Bank Transfer' | 'Cash'>('Telebirr');
   const [receiptNumber, setReceiptNumber] = useState('');
 
@@ -116,7 +116,7 @@ export const ParentDashboard: React.FC<ParentDashboardProps> = ({ portalUser }) 
   // Calculate attendance rate
   const totalAtt = attendances.length;
   const presentCount = attendances.filter((a) => a.status === 'Present').length;
-  const attRate = totalAtt > 0 ? Math.round((presentCount / totalAtt) * 100) : 100;
+  const attRate = totalAtt > 0 ? Math.round((presentCount / totalAtt) * 100) : 0;
 
   const handleRecordPayment = async (e: React.FormEvent) => {
     e.preventDefault();
