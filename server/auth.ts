@@ -4,7 +4,13 @@ import { Request, Response, NextFunction } from 'express';
 import { getDb } from './db.ts';
 import { UserRole } from '../src/types/index.ts';
 
-const AUTH_SECRET = process.env.AUTH_SECRET || 'albright-academy-secure-secret-key-2026';
+const SIGNING_SECRET = process.env.SIGNING_SECRET;
+
+if (!SIGNING_SECRET && process.env.NODE_ENV === 'production') {
+  throw new Error('SIGNING_SECRET environment variable is required in production.');
+}
+
+const SIGNING_SECRET = SIGNING_SECRET || 'development-only-secret-change-me';
 
 export interface AuthenticatedUser {
   id: string; // User ID or Admin ID
@@ -32,7 +38,7 @@ export interface AuthenticatedRequest extends Request {
 export function generateToken(adminId: string): string {
   const timestamp = Date.now().toString();
   const payload = `${adminId}:${timestamp}`;
-  const signature = crypto.createHmac('sha256', AUTH_SECRET).update(payload).digest('hex');
+  const signature = crypto.createHmac('sha256', SIGNING_SECRET).update(payload).digest('hex');
   return Buffer.from(`${payload}:${signature}`).toString('base64');
 }
 
@@ -44,15 +50,15 @@ export function verifyToken(token: string): { adminId: string } | null {
 
     const [adminId, timestamp, signature] = parts;
     const payload = `${adminId}:${timestamp}`;
-    const expectedSignature = crypto.createHmac('sha256', AUTH_SECRET).update(payload).digest('hex');
+    const expectedSignature = crypto.createHmac('sha256', SIGNING_SECRET).update(payload).digest('hex');
 
-    if (signature !== expectedSignature) {
+    if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
       return null;
     }
 
     const tokenTime = parseInt(timestamp, 10);
     const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
-    if (Date.now() - tokenTime > sevenDaysMs) {
+    if (!Number.isFinite(tokenTime) || tokenTime > Date.now() || Date.now() - tokenTime > sevenDaysMs) {
       return null;
     }
 
@@ -113,7 +119,7 @@ export async function comparePassword(plain: string, hash: string): Promise<bool
 export function generatePortalToken(userId: string, role: string): string {
   const timestamp = Date.now().toString();
   const payload = `${userId}:${role}:${timestamp}`;
-  const signature = crypto.createHmac('sha256', AUTH_SECRET).update(payload).digest('hex');
+  const signature = crypto.createHmac('sha256', SIGNING_SECRET).update(payload).digest('hex');
   return Buffer.from(`${payload}:${signature}`).toString('base64');
 }
 
@@ -125,7 +131,7 @@ export function verifyPortalToken(token: string): { userId: string; role: UserRo
 
     const [userId, roleStr, timestamp, signature] = parts;
     const payload = `${userId}:${roleStr}:${timestamp}`;
-    const expectedSignature = crypto.createHmac('sha256', AUTH_SECRET).update(payload).digest('hex');
+    const expectedSignature = crypto.createHmac('sha256', SIGNING_SECRET).update(payload).digest('hex');
 
     if (signature !== expectedSignature) return null;
 
