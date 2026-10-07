@@ -4,13 +4,13 @@ import { Request, Response, NextFunction } from 'express';
 import { getDb } from './db.ts';
 import { UserRole } from '../src/types/index.ts';
 
-const SIGNING_SECRET = process.env.SIGNING_SECRET;
+const AUTH_SECRET = process.env.AUTH_SECRET;
 
-if (!SIGNING_SECRET && process.env.NODE_ENV === 'production') {
-  throw new Error('SIGNING_SECRET environment variable is required in production.');
+if (!AUTH_SECRET && process.env.NODE_ENV === 'production') {
+  throw new Error('AUTH_SECRET environment variable is required in production.');
 }
 
-const SIGNING_SECRET = SIGNING_SECRET || 'development-only-secret-change-me';
+const SIGNING_SECRET = AUTH_SECRET || 'development-only-secret-change-me';
 
 export interface AuthenticatedUser {
   id: string; // User ID or Admin ID
