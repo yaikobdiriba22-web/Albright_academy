@@ -30,8 +30,6 @@ export interface PortalUser {
   guardianPhone?: string;
   gender?: 'Male' | 'Female' | string;
   dateOfBirth?: string;
-  // Optional credential hint for administrative issuance slip
-  plainPasswordHint?: string;
 }
 
 export interface AdminUser {
