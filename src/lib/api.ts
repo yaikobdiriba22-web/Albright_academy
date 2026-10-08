@@ -361,132 +361,33 @@ export const api = {
     referenceNumber: string;
     application: AdmissionApplication;
   }> {
-    try {
-      return await safeFetchJson<{
-        message: string;
-        referenceNumber: string;
-        application: AdmissionApplication;
-      }>(
-        `${API_BASE}/admissions`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-        },
-        'Failed to submit admission application'
-      );
-    } catch (netErr) {
-      console.warn('Backend admission endpoint unavailable, saving to local state:', netErr);
-      const year = new Date().getFullYear();
-      const randomSuffix = String(Math.floor(1000 + Math.random() * 9000));
-      const ref = `ALB-${year}-${randomSuffix}`;
-      const appRecord: AdmissionApplication = {
-        id: `app-${Date.now()}`,
-        referenceNumber: ref,
-        firstName: data.firstName || '',
-        middleName: data.middleName || '',
-        lastName: data.lastName || '',
-        dateOfBirth: data.dateOfBirth || '',
-        gender: data.gender || 'Male',
-        applyingGrade: data.applyingGrade || 'KG1',
-        previousSchool: data.previousSchool || '',
-        guardianName: data.guardianName || '',
-        guardianRelationship: (data as any).guardianRelationship || 'Mother',
-        guardianPhone: data.guardianPhone || '',
-        guardianEmail: data.guardianEmail || '',
-        address: data.address || '',
-        emergencyContact: data.emergencyContact || '',
-        additionalInformation: data.additionalInformation || '',
-        status: 'New',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      try {
-        const stored = JSON.parse(localStorage.getItem('albright_local_applications') || '[]');
-        stored.unshift(appRecord);
-        localStorage.setItem('albright_local_applications', JSON.stringify(stored));
-      } catch {
-        // ignore storage errors
-      }
-      return {
-        message: 'Application registered successfully',
-        referenceNumber: ref,
-        application: appRecord,
-      };
-    }
+    return safeFetchJson<{ message: string; referenceNumber: string; application: AdmissionApplication }>(
+      `${API_BASE}/admissions`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) },
+      'Failed to submit admission application'
+    );
   },
 
-  async submitContact(data: {
-    name: string;
-    email: string;
-    phone?: string;
-    subject: string;
-    message: string;
-  }): Promise<{ message: string; id: string }> {
-    try {
-      return await safeFetchJson<{ message: string; id: string }>(
-        `${API_BASE}/contact`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data),
-        },
-        'Failed to submit contact message'
-      );
-    } catch (netErr) {
-      console.warn('Backend contact endpoint unavailable, cached locally:', netErr);
-      return { message: 'Message sent successfully', id: `msg-${Date.now()}` };
-    }
+  async submitContact(data: { name: string; email: string; phone?: string; subject: string; message: string }): Promise<{ message: string; id: string }> {
+    return safeFetchJson<{ message: string; id: string }>(
+      `${API_BASE}/contact`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) },
+      'Failed to submit contact message'
+    );
   },
 
   // Auth
   async login(email: string, password: string): Promise<{ token: string; user: any }> {
-    try {
-      const json = await safeFetchJson<{ token: string; user: any }>(
-        `${API_BASE}/auth/login`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        },
-        'Invalid login credentials'
-      );
-      if (json.token) {
-        localStorage.setItem('albright_admin_token', json.token);
-      }
-      return json;
-    } catch (err: any) {
-      // Offline/Demo fallback if backend API is offline
-      const normalizedEmail = email.trim().toLowerCase();
-      if (
-        (normalizedEmail === 'admin@albrightacademy.edu' ||
-          normalizedEmail === 'admin' ||
-          normalizedEmail === 'dinigaatrading@gmail.com') &&
-        (password === 'Admin@2026' || password === 'admin' || password === 'admin123')
-      ) {
-        const fallbackUser = {
-          id: 'admin-fallback',
-          name: 'School Administrator',
-          email: 'admin@albrightacademy.edu',
-          role: 'SUPER_ADMIN',
-        };
-        const token = 'fallback_token_' + Date.now();
-        localStorage.setItem('albright_admin_token', token);
-        localStorage.setItem('albright_admin_user', JSON.stringify(fallbackUser));
-        return { token, user: fallbackUser };
-      }
-      throw err;
-    }
+    const json = await safeFetchJson<{ token: string; user: any }>(
+      `${API_BASE}/auth/login`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) },
+      'Invalid login credentials'
+    );
+    if (json.token) localStorage.setItem('albright_admin_token', json.token);
+    return json;
   },
 
   async getMe(): Promise<{ user: any }> {
-    const token = localStorage.getItem('albright_admin_token');
-    if (token && token.startsWith('fallback_token_')) {
-      const stored = localStorage.getItem('albright_admin_user');
-      if (stored) {
-        return { user: JSON.parse(stored) };
-      }
-    }
     return safeFetchJson<{ user: any }>(
       `${API_BASE}/auth/me`,
       { headers: getAuthHeaders() },
@@ -495,24 +396,14 @@ export const api = {
   },
 
   async checkAuth(): Promise<{ authenticated: boolean; user?: any }> {
-    try {
-      const res = await this.getMe();
-      return { authenticated: true, user: res.user };
-    } catch {
-      return { authenticated: false };
-    }
+    try { const res = await this.getMe(); return { authenticated: true, user: res.user }; }
+    catch { return { authenticated: false }; }
   },
 
   async logout(): Promise<void> {
-    try {
-      await fetch(`${API_BASE}/auth/logout`, { method: 'POST' });
-    } catch {
-      // Ignore network errors during logout
-    } finally {
-      localStorage.removeItem('albright_admin_token');
-    }
+    try { await fetch(`${API_BASE}/auth/logout`, { method: 'POST', headers: getAuthHeaders() }); }
+    finally { localStorage.removeItem('albright_admin_token'); }
   },
-
   // Gemini AI Multi-turn Chat
   async sendChatMessage(payload: {
     messages: Array<{ role: 'user' | 'model'; content: string }>;
