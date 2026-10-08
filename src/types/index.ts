@@ -1,6 +1,18 @@
 // Albright Academy Shared Types
 
-export type UserRole = 'TEACHER' | 'PARENT' | 'STUDENT' | 'ADMIN';
+export type UserRole =
+  | 'SUPER_ADMIN'
+  | 'ADMIN'
+  | 'PRINCIPAL'
+  | 'ACADEMIC_HEAD'
+  | 'TEACHER'
+  | 'ACCOUNTANT'
+  | 'HR'
+  | 'LIBRARIAN'
+  | 'RECEPTIONIST'
+  | 'PARENT'
+  | 'STUDENT'
+  | 'STAFF';
 
 export interface PortalUser {
   id: string;
