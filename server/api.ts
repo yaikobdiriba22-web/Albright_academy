@@ -467,228 +467,209 @@ router.get('/portal/me', async (req: Request, res: Response) => {
 });
 
 // ==========================================
-// ADMIN USER MANAGEMENT (TEACHERS & PARENTS)
+// ADMIN USER MANAGEMENT (TEACHERS, PARENTS & STUDENTS)
 // ==========================================
 
-// Get all portal users
-router.get('/admin/users', requireAdmin, (req: Request, res: Response) => {
-  const db = getDb();
+const portalRoles = ['TEACHER', 'PARENT', 'STUDENT'] as const;
+
+function portalUserResponse(user: any) {
+  const profile = user.teacherProfile || user.parentProfile || user.studentProfile;
+  return {
+    id: user.id,
+    fullName: `${user.firstName} ${user.lastName}`.trim(),
+    firstName: user.firstName,
+    lastName: user.lastName,
+    username: user.username,
+    email: user.email,
+    role: user.role,
+    status: user.isActive ? 'ACTIVE' : 'SUSPENDED',
+    phone: user.phone,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+    employeeId: profile?.teacherCode,
+    studentReference: profile?.studentCode,
+    studentName: profile?.students?.[0] ? `${profile.students[0].firstName} ${profile.students[0].lastName}` : undefined,
+    relationship: profile?.relationship,
+    address: profile?.address,
+    gender: profile?.gender,
+    dateOfBirth: profile?.dateOfBirth,
+  };
+}
+
+router.get('/admin/users', requireAdmin, async (req: Request, res: Response) => {
   const { role, search } = req.query;
-
-  let users = db.portalUsers || [];
-
-  if (role && role !== 'ALL') {
-    users = users.filter((u) => u.role === (role as string).toUpperCase());
-  }
-
+  const where: any = {};
+  if (role && role !== 'ALL') where.role = String(role).toUpperCase();
   if (search && typeof search === 'string') {
-    const q = search.toLowerCase();
-    users = users.filter(
-      (u) =>
-        u.fullName.toLowerCase().includes(q) ||
-        u.username.toLowerCase().includes(q) ||
-        (u.email && u.email.toLowerCase().includes(q)) ||
-        (u.phone && u.phone.includes(q)) ||
-        (u.studentName && u.studentName.toLowerCase().includes(q)) ||
-        (u.studentReference && u.studentReference.toLowerCase().includes(q)) ||
-        (u.enrolledGrade && u.enrolledGrade.toLowerCase().includes(q)) ||
-        (u.guardianName && u.guardianName.toLowerCase().includes(q))
-    );
+    const q = search.trim();
+    where.OR = [
+      { firstName: { contains: q, mode: 'insensitive' } },
+      { lastName: { contains: q, mode: 'insensitive' } },
+      { username: { contains: q, mode: 'insensitive' } },
+      { email: { contains: q, mode: 'insensitive' } },
+      { phone: { contains: q, mode: 'insensitive' } },
+    ];
   }
-
-  // Return users with plainPasswordHint for admin management convenience
-  const safeUsers = users.map(({ passwordHash: _, ...user }) => user);
-  res.json({ users: safeUsers });
+  const users = await prisma.user.findMany({
+    where,
+    include: {
+      teacherProfile: true,
+      parentProfile: { include: { students: true } },
+      studentProfile: true,
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+  res.json({ users: users.map(portalUserResponse) });
 });
 
-// Create new portal user (Teacher or Parent)
 router.post('/admin/users', requireAdmin, async (req: Request, res: Response) => {
   const {
-    fullName,
-    username,
-    password,
-    role,
-    email,
-    phone,
-    status = 'ACTIVE',
-    employeeId,
-    assignedGrades,
-    subjects,
-    studentName,
-    studentReference,
-    studentGrade,
-    relationship,
-    address,
-    enrolledGrade,
-    section,
-    guardianName,
-    guardianPhone,
-    gender,
-    dateOfBirth,
+    fullName, username, password, role, email, phone, status = 'ACTIVE',
+    employeeId, studentReference, studentGrade, relationship = 'Parent',
+    address, enrolledGrade, section, guardianName, guardianPhone, gender, dateOfBirth,
   } = req.body;
 
-  if (!fullName || !username || !password || !role) {
-    res.status(400).json({ error: 'Full name, username, password, and role are required.' });
-    return;
+  if (!fullName?.trim() || !username?.trim() || !password || !role) {
+    return res.status(400).json({ error: 'Full name, username, password, and role are required.' });
+  }
+  const cleanRole = String(role).toUpperCase();
+  if (!portalRoles.includes(cleanRole as any)) return res.status(400).json({ error: 'Role must be TEACHER, PARENT, or STUDENT.' });
+  if (String(password).length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+
+  const names = fullName.trim().split(/\s+/);
+  const firstName = names.shift() || fullName.trim();
+  const lastName = names.join(' ') || firstName;
+  const cleanUsername = String(username).trim().toLowerCase();
+  const cleanEmail = String(email || `${cleanUsername}@albright.local`).trim().toLowerCase();
+
+  if (await prisma.user.findFirst({ where: { OR: [{ username: cleanUsername }, { email: cleanEmail }] } })) {
+    return res.status(409).json({ error: `Username or email is already in use.` });
   }
 
-  const cleanRole = role.toUpperCase() as UserRole;
-  if (!['TEACHER', 'PARENT', 'STUDENT'].includes(cleanRole)) {
-    res.status(400).json({ error: 'Role must be TEACHER, PARENT, or STUDENT.' });
-    return;
+  if (cleanRole === 'STUDENT' && !gender) {
+    return res.status(400).json({ error: 'Gender is required when creating a student account.' });
   }
 
-  if (password.length < 8) {
-    res.status(400).json({ error: 'Password must be at least 8 characters.' });
-    return;
-  }
+  const passwordHash = await hashPassword(String(password));
+  const result = await prisma.$transaction(async (tx) => {
+    const user = await tx.user.create({
+      data: {
+        firstName, lastName, username: cleanUsername, email: cleanEmail, passwordHash,
+        role: cleanRole as any, phone: phone?.trim() || null, isActive: status !== 'SUSPENDED',
+      },
+    });
 
-  const cleanUsername = username.trim().toLowerCase();
-  const db = getDb();
+    if (cleanRole === 'TEACHER') {
+      await tx.teacher.create({
+        data: {
+          userId: user.id,
+          teacherCode: employeeId?.trim() || `ALB-TEA-${Date.now().toString().slice(-6)}`,
+          fullName: fullName.trim(),
+          qualification: 'Not specified',
+          specialization: 'General',
+          phone: phone?.trim() || '',
+          email: cleanEmail,
+        },
+      });
+    } else if (cleanRole === 'PARENT') {
+      const parent = await tx.parent.create({
+        data: {
+          userId: user.id,
+          fullName: fullName.trim(),
+          relationship: String(relationship || 'Parent'),
+          phone: phone?.trim() || '',
+          email: cleanEmail,
+          address: address?.trim() || null,
+        },
+      });
+      if (studentReference) {
+        await tx.student.updateMany({ where: { studentCode: String(studentReference).trim() }, data: { parentId: parent.id } });
+      }
+    } else {
+      if (!dateOfBirth) throw new Error('Date of birth is required when creating a student account.');
+      await tx.student.create({
+        data: {
+          userId: user.id,
+          studentCode: studentReference?.trim() || `ALB-STU-${Date.now().toString().slice(-8)}`,
+          firstName, middleName: null, lastName,
+          dateOfBirth: new Date(dateOfBirth),
+          gender: String(gender),
+          parentId: null,
+        },
+      });
+    }
+    return tx.user.findUnique({
+      where: { id: user.id },
+      include: { teacherProfile: true, parentProfile: { include: { students: true } }, studentProfile: true },
+    });
+  });
 
-  // Check username uniqueness
-  const cleanEmail = email ? email.trim().toLowerCase() : undefined;
-  const exists = db.portalUsers?.some(
-    (u) => u.username.toLowerCase() === cleanUsername || (!!cleanEmail && !!u.email && u.email.toLowerCase() === cleanEmail)
-  );
-  if (exists) {
-    res.status(409).json({ error: `Username "${cleanUsername}" is already taken. Please choose another.` });
-    return;
-  }
-
-  const passwordHash = await hashPassword(password);
-  const now = new Date().toISOString();
-
-  const newUser: PortalUser & { passwordHash: string } = {
-    id: `usr-${cleanRole.toLowerCase()}-${Date.now()}`,
-    fullName: fullName.trim(),
-    username: cleanUsername,
-    email: cleanEmail,
-    role: cleanRole,
-    status: status === 'SUSPENDED' ? 'SUSPENDED' : 'ACTIVE',
-    phone: phone ? phone.trim() : undefined,
-    passwordHash,
-    createdAt: now,
-    updatedAt: now,
-    // Teacher specific
-    ...(cleanRole === 'TEACHER' && {
-      employeeId: employeeId ? employeeId.trim() : undefined,
-      assignedGrades: Array.isArray(assignedGrades) ? assignedGrades : assignedGrades ? [assignedGrades] : [],
-      subjects: Array.isArray(subjects) ? subjects : subjects ? [subjects] : [],
-    }),
-    // Parent specific
-    ...(cleanRole === 'PARENT' && {
-      studentName: studentName ? studentName.trim() : undefined,
-      studentReference: studentReference ? studentReference.trim() : undefined,
-      studentGrade: studentGrade ? studentGrade.trim() : undefined,
-      relationship: relationship ? relationship.trim() : undefined,
-      address: address ? address.trim() : undefined,
-    }),
-    // Student specific
-    ...(cleanRole === 'STUDENT' && {
-      enrolledGrade: enrolledGrade ? enrolledGrade.trim() : (studentGrade ? studentGrade.trim() : undefined),
-      section: section ? section.trim() : undefined,
-      studentReference: studentReference ? studentReference.trim() : undefined,
-      guardianName: guardianName ? guardianName.trim() : undefined,
-      guardianPhone: guardianPhone ? guardianPhone.trim() : undefined,
-      gender: gender ? gender.trim() : undefined,
-      dateOfBirth: dateOfBirth ? dateOfBirth.trim() : undefined,
-    }),
-  };
-
-  if (!db.portalUsers) db.portalUsers = [];
-  db.portalUsers.unshift(newUser);
-  saveDb(db);
-
-  const roleTitle = cleanRole === 'TEACHER' ? 'Teacher' : cleanRole === 'PARENT' ? 'Parent' : 'Student';
-  const { passwordHash: _, ...safeUser } = newUser;
   res.status(201).json({
-    message: `${roleTitle} user account created successfully.`,
-    user: safeUser,
+    message: `${cleanRole === 'TEACHER' ? 'Teacher' : cleanRole === 'PARENT' ? 'Parent' : 'Student'} user account created successfully.`,
+    user: portalUserResponse(result),
   });
 });
 
-// Update portal user
 router.put('/admin/users/:id', requireAdmin, async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const existing = await prisma.user.findUnique({
+    where: { id: req.params.id },
+    include: { teacherProfile: true, parentProfile: { include: { students: true } }, studentProfile: true },
+  });
+  if (!existing || !portalRoles.includes(existing.role as any)) return res.status(404).json({ error: 'User not found.' });
+
   const updates = req.body;
-  const db = getDb();
-
-  const userIndex = db.portalUsers?.findIndex((u) => u.id === id);
-  if (userIndex === undefined || userIndex === -1) {
-    res.status(404).json({ error: 'User not found.' });
-    return;
+  const data: any = {};
+  if (updates.username !== undefined) data.username = String(updates.username).trim().toLowerCase();
+  if (updates.email !== undefined) data.email = String(updates.email).trim().toLowerCase();
+  if (updates.fullName) {
+    const parts = String(updates.fullName).trim().split(/\s+/);
+    data.firstName = parts.shift() || existing.firstName;
+    data.lastName = parts.join(' ') || data.firstName;
+  }
+  if (updates.phone !== undefined) data.phone = updates.phone ? String(updates.phone).trim() : null;
+  if (updates.status !== undefined) data.isActive = String(updates.status).toUpperCase() !== 'SUSPENDED';
+  if (updates.password?.trim()) {
+    if (String(updates.password).trim().length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+    data.passwordHash = await hashPassword(String(updates.password).trim());
   }
 
-  const existingUser = db.portalUsers[userIndex];
-
-  // If username changed, check uniqueness
-  if (updates.username && updates.username.trim().toLowerCase() !== existingUser.username.toLowerCase()) {
-    const cleanUsername = updates.username.trim().toLowerCase();
-    const isTaken = db.portalUsers.some(
-      (u) => u.id !== id && u.username.toLowerCase() === cleanUsername
-    );
-    if (isTaken) {
-      res.status(409).json({ error: `Username "${cleanUsername}" is already taken.` });
-      return;
+  const result = await prisma.$transaction(async (tx) => {
+    const user = await tx.user.update({ where: { id: existing.id }, data });
+    if (user.role === 'TEACHER' && existing.teacherProfile) {
+      await tx.teacher.update({
+        where: { id: existing.teacherProfile.id },
+        data: {
+          fullName: updates.fullName ? String(updates.fullName).trim() : undefined,
+          teacherCode: updates.employeeId ? String(updates.employeeId).trim() : undefined,
+          phone: updates.phone !== undefined ? String(updates.phone || '') : undefined,
+          email: updates.email !== undefined ? String(updates.email || '') : undefined,
+        },
+      });
     }
-    existingUser.username = cleanUsername;
-  }
-
-  // If password changed, update hash without ever storing the plaintext password
-  if (updates.password && updates.password.trim()) {
-    if (updates.password.trim().length < 8) {
-      res.status(400).json({ error: 'Password must be at least 8 characters.' });
-      return;
+    if (user.role === 'PARENT' && existing.parentProfile) {
+      await tx.parent.update({
+        where: { id: existing.parentProfile.id },
+        data: {
+          fullName: updates.fullName ? String(updates.fullName).trim() : undefined,
+          relationship: updates.relationship !== undefined ? String(updates.relationship) : undefined,
+          phone: updates.phone !== undefined ? String(updates.phone || '') : undefined,
+          email: updates.email !== undefined ? String(updates.email || '') : undefined,
+          address: updates.address !== undefined ? (updates.address ? String(updates.address) : null) : undefined,
+        },
+      });
     }
-    existingUser.passwordHash = await hashPassword(updates.password.trim());
-  }
-
-  // Update fields
-  if (updates.fullName) existingUser.fullName = updates.fullName.trim();
-  if (updates.email !== undefined) existingUser.email = updates.email ? updates.email.trim() : undefined;
-  if (updates.phone !== undefined) existingUser.phone = updates.phone ? updates.phone.trim() : undefined;
-  if (updates.status) existingUser.status = updates.status;
-  if (updates.role) existingUser.role = updates.role.toUpperCase();
-
-  // Role fields
-  if (updates.employeeId !== undefined) existingUser.employeeId = updates.employeeId;
-  if (updates.assignedGrades !== undefined) existingUser.assignedGrades = updates.assignedGrades;
-  if (updates.subjects !== undefined) existingUser.subjects = updates.subjects;
-  if (updates.studentName !== undefined) existingUser.studentName = updates.studentName;
-  if (updates.studentReference !== undefined) existingUser.studentReference = updates.studentReference;
-  if (updates.studentGrade !== undefined) existingUser.studentGrade = updates.studentGrade;
-  if (updates.relationship !== undefined) existingUser.relationship = updates.relationship;
-  if (updates.address !== undefined) existingUser.address = updates.address;
-  // Student fields
-  if (updates.enrolledGrade !== undefined) existingUser.enrolledGrade = updates.enrolledGrade;
-  if (updates.section !== undefined) existingUser.section = updates.section;
-  if (updates.guardianName !== undefined) existingUser.guardianName = updates.guardianName;
-  if (updates.guardianPhone !== undefined) existingUser.guardianPhone = updates.guardianPhone;
-  if (updates.gender !== undefined) existingUser.gender = updates.gender;
-  if (updates.dateOfBirth !== undefined) existingUser.dateOfBirth = updates.dateOfBirth;
-
-  existingUser.updatedAt = new Date().toISOString();
-  saveDb(db);
-
-  const { passwordHash: _, ...safeUser } = existingUser;
-  res.json({ message: 'User updated successfully.', user: safeUser });
+    return tx.user.findUnique({
+      where: { id: user.id },
+      include: { teacherProfile: true, parentProfile: { include: { students: true } }, studentProfile: true },
+    });
+  });
+  res.json({ message: 'User updated successfully.', user: portalUserResponse(result) });
 });
 
-// Delete portal user
-router.delete('/admin/users/:id', requireAdmin, (req: Request, res: Response) => {
-  const { id } = req.params;
-  const db = getDb();
-
-  const initialCount = db.portalUsers?.length || 0;
-  db.portalUsers = db.portalUsers?.filter((u) => u.id !== id) || [];
-
-  if (db.portalUsers.length === initialCount) {
-    res.status(404).json({ error: 'User not found.' });
-    return;
-  }
-
-  saveDb(db);
+router.delete('/admin/users/:id', requireAdmin, async (req: Request, res: Response) => {
+  const existing = await prisma.user.findUnique({ where: { id: req.params.id } });
+  if (!existing || !portalRoles.includes(existing.role as any)) return res.status(404).json({ error: 'User not found.' });
+  await prisma.user.delete({ where: { id: existing.id } });
   res.json({ message: 'User account deleted successfully.' });
 });
 
