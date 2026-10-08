@@ -23,12 +23,14 @@ import {
 import smsRoutes from './smsRoutes.ts';
 import prismaAcademicRoutes from './prismaAcademicRoutes.ts';
 import prismaFinanceRoutes from './prismaFinanceRoutes.ts';
+import prismaCommunicationRoutes from './prismaCommunicationRoutes.ts';
 
 const router = Router();
 
 // Mount Prisma-backed ERP routes first so migrated endpoints take precedence.
 router.use('/sms', prismaAcademicRoutes);
 router.use('/sms', prismaFinanceRoutes);
+router.use('/sms', prismaCommunicationRoutes);
 router.use('/sms', smsRoutes);
 
 // ==========================================
