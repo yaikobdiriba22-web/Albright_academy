@@ -21,6 +21,7 @@ import {
   UserRole,
 } from '../src/types/index.ts';
 import smsRoutes from './smsRoutes.ts';
+import prismaSmsRoutes from './prismaSmsRoutes.ts';
 import prismaAcademicRoutes from './prismaAcademicRoutes.ts';
 import prismaFinanceRoutes from './prismaFinanceRoutes.ts';
 import prismaCommunicationRoutes from './prismaCommunicationRoutes.ts';
@@ -28,6 +29,7 @@ import prismaCommunicationRoutes from './prismaCommunicationRoutes.ts';
 const router = Router();
 
 // Mount Prisma-backed ERP routes first so migrated endpoints take precedence.
+router.use('/sms', prismaSmsRoutes);
 router.use('/sms', prismaAcademicRoutes);
 router.use('/sms', prismaFinanceRoutes);
 router.use('/sms', prismaCommunicationRoutes);
