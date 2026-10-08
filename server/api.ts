@@ -1,10 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { GoogleGenAI } from '@google/genai';
-import {
-  getDb,
-  saveDb,
-  generateReferenceNumber,
-} from './db.ts';
+import { getDb, saveDb, generateReferenceNumber } from './db.ts';
+import { prisma } from './prisma.ts';
 import {
   generateToken,
   comparePassword,
@@ -35,22 +32,36 @@ router.use('/sms', smsRoutes);
 // ==========================================
 
 // Get School Settings
-router.get('/settings', (req: Request, res: Response) => {
-  const db = getDb();
-  res.json(db.settings);
+router.get('/settings', async (_req: Request, res: Response) => {
+  const settings = await prisma.schoolSettings.findUnique({ where: { id: 'default' } });
+  res.json(settings || {
+    id: 'default',
+    schoolName: 'Albright Academy',
+    slogan: 'Center of Excellence and Innovation',
+    logoUrl: '/logo.png',
+    phone: '0923014132',
+    email: 'dinigaatrading@gmail.com',
+    address: 'Sheggar city, Gefarsa Gujjee, kella',
+    mapsUrl: 'https://maps.google.com/?q=Sheggar+city+Gefarsa+Gujjee+kella',
+    mission: '',
+    vision: '',
+    about: '',
+    principalName: '',
+    principalMessage: '',
+    principalPhotoUrl: '',
+    updatedAt: new Date().toISOString(),
+  });
 });
 
 // Get Published News
-router.get('/news', (req: Request, res: Response) => {
-  const db = getDb();
-  const published = db.news.filter((item) => item.status === 'Published');
+router.get('/news', async (_req: Request, res: Response) => {
+  const published = await prisma.news.findMany({ where: { status: 'Published' }, orderBy: { publishedAt: 'desc' } });
   res.json(published);
 });
 
 // Get Single News by Slug
-router.get('/news/:slug', (req: Request, res: Response) => {
-  const db = getDb();
-  const item = db.news.find((n) => n.slug === req.params.slug);
+router.get('/news/:slug', async (req: Request, res: Response) => {
+  const item = await prisma.news.findUnique({ where: { slug: req.params.slug } });
   if (!item) {
     res.status(404).json({ error: 'News article not found' });
     return;
@@ -59,15 +70,14 @@ router.get('/news/:slug', (req: Request, res: Response) => {
 });
 
 // Get Upcoming / Published Events
-router.get('/events', (req: Request, res: Response) => {
-  const db = getDb();
-  res.json(db.events);
+router.get('/events', async (_req: Request, res: Response) => {
+  const events = await prisma.event.findMany({ orderBy: { createdAt: 'desc' } });
+  res.json(events);
 });
 
 // Get Single Event by Slug
-router.get('/events/:slug', (req: Request, res: Response) => {
-  const db = getDb();
-  const event = db.events.find((e) => e.slug === req.params.slug);
+router.get('/events/:slug', async (req: Request, res: Response) => {
+  const event = await prisma.event.findUnique({ where: { slug: req.params.slug } });
   if (!event) {
     res.status(404).json({ error: 'Event not found' });
     return;
@@ -76,119 +86,83 @@ router.get('/events/:slug', (req: Request, res: Response) => {
 });
 
 // Get Gallery Images (optional category filter)
-router.get('/gallery', (req: Request, res: Response) => {
-  const db = getDb();
+router.get('/gallery', async (req: Request, res: Response) => {
   const { category } = req.query;
-  if (category && category !== 'All') {
-    const filtered = db.gallery.filter((img) => img.category === category);
-    res.json(filtered);
-    return;
-  }
-  res.json(db.gallery);
+  const gallery = await prisma.galleryImage.findMany({
+    where: category && category !== 'All' ? { category: String(category) } : undefined,
+    orderBy: { createdAt: 'desc' },
+  });
+  res.json(gallery);
 });
 
 // Submit Admission Application
-router.post('/admissions', (req: Request, res: Response) => {
+router.post('/admissions', async (req: Request, res: Response) => {
   const {
-    firstName,
-    middleName,
-    lastName,
-    dateOfBirth,
-    gender,
-    applyingGrade,
-    previousSchool,
-    guardianName,
-    guardianPhone,
-    guardianEmail,
-    address,
-    emergencyContact,
-    additionalInformation,
+    firstName, middleName, lastName, dateOfBirth, gender, applyingGrade,
+    previousSchool, guardianName, guardianPhone, guardianEmail, address,
+    emergencyContact, additionalInformation,
   } = req.body;
 
-  // Validation
-  if (
-    !firstName?.trim() ||
-    !lastName?.trim() ||
-    !dateOfBirth ||
-    !gender ||
-    !applyingGrade ||
-    !guardianName?.trim() ||
-    !guardianPhone?.trim() ||
-    !guardianEmail?.trim() ||
-    !address?.trim() ||
-    !emergencyContact?.trim()
-  ) {
+  if (!firstName?.trim() || !lastName?.trim() || !dateOfBirth || !gender ||
+      !applyingGrade || !guardianName?.trim() || !guardianPhone?.trim() ||
+      !guardianEmail?.trim() || !address?.trim() || !emergencyContact?.trim()) {
     res.status(400).json({ error: 'Please fill in all required admission fields.' });
     return;
   }
-
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!emailRegex.test(guardianEmail)) {
     res.status(400).json({ error: 'Please provide a valid parent/guardian email address.' });
     return;
   }
 
-  const db = getDb();
-  const referenceNumber = generateReferenceNumber();
-  const newApplication: AdmissionApplication = {
-    id: `app-${Date.now()}`,
-    referenceNumber,
-    firstName: firstName.trim(),
-    middleName: middleName?.trim() || '',
-    lastName: lastName.trim(),
-    dateOfBirth,
-    gender,
-    applyingGrade,
-    previousSchool: previousSchool?.trim() || '',
-    guardianName: guardianName.trim(),
-    guardianPhone: guardianPhone.trim(),
-    guardianEmail: guardianEmail.trim().toLowerCase(),
-    address: address.trim(),
-    emergencyContact: emergencyContact.trim(),
-    additionalInformation: additionalInformation?.trim() || '',
-    status: 'New',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-
-  db.applications.unshift(newApplication);
-  saveDb(db);
+  const year = new Date().getFullYear();
+  const referenceNumber = `ALB-${year}-${Date.now().toString().slice(-8)}`;
+  const application = await prisma.admissionApplication.create({
+    data: {
+      referenceNumber,
+      firstName: firstName.trim(),
+      middleName: middleName?.trim() || null,
+      lastName: lastName.trim(),
+      dateOfBirth: String(dateOfBirth),
+      gender: String(gender),
+      applyingGrade: String(applyingGrade),
+      previousSchool: previousSchool?.trim() || null,
+      guardianName: guardianName.trim(),
+      guardianPhone: guardianPhone.trim(),
+      guardianEmail: guardianEmail.trim().toLowerCase(),
+      address: address.trim(),
+      emergencyContact: emergencyContact.trim(),
+      additionalInformation: additionalInformation?.trim() || null,
+      status: 'New',
+    },
+  });
 
   res.status(201).json({
     message: 'Application submitted successfully.',
     referenceNumber,
-    application: newApplication,
+    application,
   });
 });
 
 // Submit Contact Message
-router.post('/contact', (req: Request, res: Response) => {
+router.post('/contact', async (req: Request, res: Response) => {
   const { name, email, phone, subject, message } = req.body;
-
   if (!name?.trim() || !email?.trim() || !subject?.trim() || !message?.trim()) {
     res.status(400).json({ error: 'Name, email, subject, and message are required.' });
     return;
   }
-
-  const db = getDb();
-  const newMessage: ContactMessage = {
-    id: `msg-${Date.now()}`,
-    name: name.trim(),
-    email: email.trim().toLowerCase(),
-    phone: phone?.trim() || '',
-    subject: subject.trim(),
-    message: message.trim(),
-    isRead: false,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-
-  db.messages.unshift(newMessage);
-  saveDb(db);
-
+  const item = await prisma.contactMessage.create({
+    data: {
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      phone: phone?.trim() || null,
+      subject: subject.trim(),
+      message: message.trim(),
+    },
+  });
   res.status(201).json({
     message: 'Your message has been sent successfully. We will be in touch shortly.',
-    id: newMessage.id,
+    id: item.id,
   });
 });
 
@@ -198,61 +172,31 @@ router.post('/contact', (req: Request, res: Response) => {
 
 router.post('/auth/login', async (req: Request, res: Response) => {
   const { email, password } = req.body;
-
   if (!email || !password) {
     res.status(400).json({ error: 'Email or username and password are required.' });
     return;
   }
-
-  const query = email.trim().toLowerCase();
-  const db = getDb();
-  const admin = db.admins.find((a) => {
-    const adminEmail = a.email.toLowerCase();
-    const adminName = a.name.toLowerCase();
-    return (
-      adminEmail === query ||
-      adminName === query ||
-      adminEmail.split('@')[0] === query ||
-      (query === 'admin' && adminEmail.startsWith('admin'))
-    );
+  const query = String(email).trim().toLowerCase();
+  const admins = await prisma.admin.findMany({
+    where: { OR: [{ email: query }, { name: query }] },
+    take: 5,
   });
-
-  if (!admin) {
+  const admin = admins.find(a => a.email.toLowerCase() === query || a.name.toLowerCase() === query || a.email.split('@')[0] === query || (query === 'admin' && a.email.toLowerCase().startsWith('admin')));
+  if (!admin || !(await comparePassword(password, admin.passwordHash))) {
     res.status(401).json({ error: 'Invalid email/username or password.' });
     return;
   }
-
-  const match = await comparePassword(password, admin.passwordHash);
-  if (!match) {
-    res.status(401).json({ error: 'Invalid email or password.' });
-    return;
-  }
-
   const token = generateToken(admin.id);
-
-  // Set HTTP-only cookie
   res.cookie('albright_admin_token', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
-
-  res.json({
-    token,
-    user: {
-      id: admin.id,
-      name: admin.name,
-      email: admin.email,
-      createdAt: admin.createdAt,
-    },
-  });
+  res.json({ token, user: { id: admin.id, name: admin.name, email: admin.email, createdAt: admin.createdAt } });
 });
 
-router.get('/auth/me', requireAdmin, (req: Request, res: Response) => {
+router.get('/auth/me', requireAdmin, async (req: Request, res: Response) => {
   const adminId = (req as any).adminId;
-  const db = getDb();
-  const admin = db.admins.find((a) => a.id === adminId);
+  const admin = await prisma.admin.findUnique({ where: { id: adminId } });
   if (!admin) {
     res.status(404).json({ error: 'Admin account not found.' });
     return;
@@ -282,8 +226,7 @@ router.post('/auth/change-password', requireAdmin, async (req: Request, res: Res
     return;
   }
 
-  const db = getDb();
-  const admin = db.admins.find((a) => a.id === adminId);
+  const admin = await prisma.admin.findUnique({ where: { id: adminId } });
   if (!admin) {
     res.status(404).json({ error: 'Admin not found.' });
     return;
@@ -295,8 +238,7 @@ router.post('/auth/change-password', requireAdmin, async (req: Request, res: Res
     return;
   }
 
-  admin.passwordHash = await hashPassword(newPassword);
-  saveDb(db);
+  await prisma.admin.update({ where: { id: adminId }, data: { passwordHash: await hashPassword(newPassword) } });
 
   res.json({ message: 'Password updated successfully.' });
 });
@@ -613,86 +555,54 @@ router.put('/admin/settings', requireAdmin, (req: Request, res: Response) => {
 
 router.post('/portal/login', async (req: Request, res: Response) => {
   const { usernameOrEmail, password, role } = req.body;
-
   if (!usernameOrEmail || !password) {
     res.status(400).json({ error: 'Username/Email and password are required.' });
     return;
   }
+  const normalizedInput = String(usernameOrEmail).trim().toLowerCase();
+  const userRecord = await prisma.user.findFirst({
+    where: { OR: [{ username: normalizedInput }, { email: normalizedInput }] },
+    include: { teacherProfile: true, parentProfile: true, studentProfile: true },
+  });
+  if (!userRecord) { res.status(401).json({ error: 'Invalid username/email or password.' }); return; }
 
-  const db = getDb();
-  const normalizedInput = usernameOrEmail.trim().toLowerCase();
-
-  // Find user matching username or email
-  const userRecord = db.portalUsers?.find(
-    (u) =>
-      u.username.toLowerCase() === normalizedInput ||
-      (u.email && u.email.toLowerCase() === normalizedInput)
-  );
-
-  if (!userRecord) {
-    res.status(401).json({ error: 'Invalid username/email or password.' });
+  if (role && userRecord.role !== String(role).toUpperCase()) {
+    const roleDisplay = userRecord.role === 'TEACHER' ? 'Teacher' : userRecord.role === 'PARENT' ? 'Parent' : userRecord.role === 'STUDENT' ? 'Student' : String(userRecord.role);
+    res.status(403).json({ error: `Account role mismatch: This account is registered as a ${roleDisplay}.` });
     return;
   }
-
-  // Check if role matches requested portal role (if role was specified)
-  if (role) {
-    const expectedRole = role.toUpperCase();
-    if (userRecord.role !== expectedRole) {
-      const roleDisplay = userRecord.role === 'TEACHER' ? 'Teacher' : userRecord.role === 'PARENT' ? 'Parent' : 'Student';
-      const requestedDisplay = role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
-      res.status(403).json({
-        error: `Account role mismatch: This account is registered as a ${roleDisplay}, not a ${requestedDisplay}. Please use the correct portal login tab.`,
-      });
-      return;
-    }
-  }
-
-  if (userRecord.status === 'SUSPENDED') {
-    res.status(403).json({ error: 'Your portal account is currently suspended. Please contact the school administration.' });
-    return;
-  }
-
-  const isValidPassword = await comparePassword(password, userRecord.passwordHash);
-  if (!isValidPassword) {
-    res.status(401).json({ error: 'Invalid username/email or password.' });
-    return;
+  if (!userRecord.isActive) { res.status(403).json({ error: 'Your portal account is currently suspended. Please contact the school administration.' }); return; }
+  if (!(await comparePassword(password, userRecord.passwordHash))) {
+    res.status(401).json({ error: 'Invalid username/email or password.' }); return;
   }
 
   const token = generatePortalToken(userRecord.id, userRecord.role);
-
-  // Exclude passwordHash from user profile response
-  const { passwordHash: _, ...safeUser } = userRecord;
-
-  res.json({
-    token,
-    user: safeUser,
-    message: `Welcome to Albright Academy ${safeUser.role === 'TEACHER' ? 'Teacher' : 'Parent'} Portal, ${safeUser.fullName}!`,
+  const fullName = `${userRecord.firstName} ${userRecord.lastName}`.trim();
+  const safeUser = {
+    id: userRecord.id, fullName, username: userRecord.username || '', email: userRecord.email,
+    role: userRecord.role, status: userRecord.isActive ? 'ACTIVE' : 'SUSPENDED',
+    createdAt: userRecord.createdAt.toISOString(), updatedAt: userRecord.updatedAt.toISOString(),
+  };
+  res.cookie('albright_portal_token', token, {
+    httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
   });
+  res.json({ token, user: safeUser, message: `Welcome to Albright Academy ${role === 'TEACHER' ? 'Teacher' : role === 'STUDENT' ? 'Student' : 'Parent'} Portal, ${fullName}!` });
 });
 
-router.get('/portal/me', (req: Request, res: Response) => {
+router.get('/portal/me', async (req: Request, res: Response) => {
   const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    res.status(401).json({ error: 'No token provided.' });
-    return;
-  }
-
-  const token = authHeader.substring(7);
-  const verified = verifyPortalToken(token);
-  if (!verified) {
-    res.status(401).json({ error: 'Invalid or expired session token.' });
-    return;
-  }
-
-  const db = getDb();
-  const user = db.portalUsers?.find((u) => u.id === verified.userId && u.role === verified.role);
-  if (!user || user.status !== 'ACTIVE') {
-    res.status(401).json({ error: 'User not found or inactive.' });
-    return;
-  }
-
-  const { passwordHash: _, ...safeUser } = user;
-  res.json({ user: safeUser });
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.substring(7) : req.cookies?.albright_portal_token;
+  if (!token) { res.status(401).json({ error: 'No token provided.' }); return; }
+  const verified = await verifyPortalToken(token);
+  if (!verified) { res.status(401).json({ error: 'Invalid or expired session token.' }); return; }
+  const user = await prisma.user.findUnique({ where: { id: verified.userId } });
+  if (!user || !user.isActive || user.role !== verified.role) { res.status(401).json({ error: 'User not found or inactive.' }); return; }
+  res.json({ user: {
+    id: user.id, fullName: `${user.firstName} ${user.lastName}`.trim(), username: user.username || '',
+    email: user.email, role: user.role, status: user.isActive ? 'ACTIVE' : 'SUSPENDED',
+    createdAt: user.createdAt.toISOString(), updatedAt: user.updatedAt.toISOString(),
+  }});
 });
 
 // ==========================================
