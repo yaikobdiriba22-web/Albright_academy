@@ -31,6 +31,8 @@ function safeStudent(s: any) {
   };
 }
 
+router.get('/me', async (req: AuthenticatedRequest, res: Response) => {const user=req.authUser!;if(user.role==='TEACHER'){const teacher=await prisma.teacher.findUnique({where:{id:user.teacherId||'__none__'},include:{subjects:true}});return res.json({user,teacherProfile:teacher,assignedClasses:[],assignedSubjects:teacher?.subjects||[]});}if(user.role==='PARENT'){const parent=await prisma.parent.findUnique({where:{id:user.parentId||'__none__'},include:{students:{include:{enrollments:{include:{class:true,section:true},orderBy:{createdAt:'desc'},take:1}}}}});return res.json({user,parentProfile:parent,children:parent?.students?.map(safeStudent)||[]});}if(user.role==='STUDENT'){const student=await prisma.student.findUnique({where:{id:user.studentId||'__none__'},include:{enrollments:{include:{class:true,section:true},orderBy:{createdAt:'desc'},take:1}}});return res.json({user,studentProfile:safeStudent(student),enrolledClass:student?.enrollments?.[0]?.class,section:student?.enrollments?.[0]?.section});}const [students,teachers,parents,classes]=await Promise.all([prisma.student.count(),prisma.teacher.count(),prisma.parent.count(),prisma.class.count()]);res.json({user,totalStudents:students,totalTeachers:teachers,totalParents:parents,totalClasses:classes});});
+
 router.get('/classes', async (_req, res) => {
   const classes = await prisma.class.findMany({ include: { sections: true }, orderBy: { gradeLevel: 'asc' } });
   res.json(classes);
