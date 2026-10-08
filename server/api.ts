@@ -254,308 +254,163 @@ router.post('/auth/change-password', requireAdmin, async (req: Request, res: Res
 // ==========================================
 
 // Dashboard Metrics & Stats
-router.get('/admin/stats', requireAdmin, (req: Request, res: Response) => {
-  const db = getDb();
-  const stats = {
-    totalApplications: db.applications.length,
-    pendingApplications: db.applications.filter((a) => a.status === 'New' || a.status === 'Reviewing').length,
-    publishedNews: db.news.filter((n) => n.status === 'Published').length,
-    upcomingEvents: db.events.filter((e) => e.status === 'Upcoming').length,
-    unreadMessages: db.messages.filter((m) => !m.isRead).length,
-    totalGalleryImages: db.gallery.length,
-  };
-  res.json(stats);
+router.get('/admin/stats', requireAdmin, async (_req: Request, res: Response) => {
+  const [totalApplications, pendingApplications, publishedNews, upcomingEvents, unreadMessages, totalGalleryImages] = await Promise.all([
+    prisma.admissionApplication.count(),
+    prisma.admissionApplication.count({ where: { status: { in: ['New', 'Reviewing'] } } }),
+    prisma.news.count({ where: { status: 'Published' } }),
+    prisma.event.count({ where: { status: 'Upcoming' } }),
+    prisma.contactMessage.count({ where: { isRead: false } }),
+    prisma.galleryImage.count(),
+  ]);
+  res.json({ totalApplications, pendingApplications, publishedNews, upcomingEvents, unreadMessages, totalGalleryImages });
 });
 
 // Admin Applications
-router.get('/admin/applications', requireAdmin, (req: Request, res: Response) => {
-  const db = getDb();
-  res.json(db.applications);
+router.get('/admin/applications', requireAdmin, async (_req: Request, res: Response) => {
+  const rows = await prisma.admissionApplication.findMany({ orderBy: { createdAt: 'desc' } });
+  res.json(rows);
 });
 
-router.patch('/admin/applications/:id/status', requireAdmin, (req: Request, res: Response) => {
+router.patch('/admin/applications/:id/status', requireAdmin, async (req: Request, res: Response) => {
   const { status } = req.body;
   const valid = ['New', 'Reviewing', 'Accepted', 'Rejected'];
-  if (!valid.includes(status)) {
-    res.status(400).json({ error: 'Invalid status' });
-    return;
-  }
-
-  const db = getDb();
-  const app = db.applications.find((a) => a.id === req.params.id);
-  if (!app) {
-    res.status(404).json({ error: 'Application not found' });
-    return;
-  }
-
-  app.status = status;
-  app.updatedAt = new Date().toISOString();
-  saveDb(db);
-
-  res.json({ message: `Application status updated to ${status}.`, application: app });
+  if (!valid.includes(status)) return res.status(400).json({ error: 'Invalid status' });
+  const application = await prisma.admissionApplication.update({
+    where: { id: req.params.id },
+    data: { status: String(status), updatedAt: new Date() },
+  });
+  res.json({ message: `Application status updated to ${status}.`, application });
 });
 
-router.delete('/admin/applications/:id', requireAdmin, (req: Request, res: Response) => {
-  const db = getDb();
-  const initialLen = db.applications.length;
-  db.applications = db.applications.filter((a) => a.id !== req.params.id);
-
-  if (db.applications.length === initialLen) {
-    res.status(404).json({ error: 'Application not found' });
-    return;
-  }
-
-  saveDb(db);
+router.delete('/admin/applications/:id', requireAdmin, async (req: Request, res: Response) => {
+  await prisma.admissionApplication.delete({ where: { id: req.params.id } });
   res.json({ message: 'Application deleted successfully.' });
 });
 
 // Admin News CRUD
-router.get('/admin/news', requireAdmin, (req: Request, res: Response) => {
-  const db = getDb();
-  res.json(db.news);
+router.get('/admin/news', requireAdmin, async (_req: Request, res: Response) => {
+  res.json(await prisma.news.findMany({ orderBy: { createdAt: 'desc' } }));
 });
 
-router.post('/admin/news', requireAdmin, (req: Request, res: Response) => {
+router.post('/admin/news', requireAdmin, async (req: Request, res: Response) => {
   const { title, summary, content, imageUrl, author, status } = req.body;
-
-  if (!title?.trim() || !content?.trim()) {
-    res.status(400).json({ error: 'Title and content are required' });
-    return;
-  }
-
-  const slug = title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)+/g, '') + `-${Date.now().toString().slice(-4)}`;
-
-  const db = getDb();
-  const newItem: NewsItem = {
-    id: `news-${Date.now()}`,
-    title: title.trim(),
-    slug,
-    summary: summary?.trim() || title.trim(),
-    content: content.trim(),
-    imageUrl:
-      imageUrl?.trim() ||
-      'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=1000&q=80',
-    author: author?.trim() || 'School Administration',
+  if (!title?.trim() || !content?.trim()) return res.status(400).json({ error: 'Title and content are required' });
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + `-${Date.now().toString().slice(-6)}`;
+  const row = await prisma.news.create({ data: {
+    title: title.trim(), slug, summary: summary?.trim() || title.trim(), content: content.trim(),
+    imageUrl: imageUrl?.trim() || '/school-placeholder.jpg', author: author?.trim() || 'School Administration',
     status: status === 'Draft' ? 'Draft' : 'Published',
-    publishedAt: new Date().toISOString(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-
-  db.news.unshift(newItem);
-  saveDb(db);
-
-  res.status(201).json({ message: 'News article created successfully.', news: newItem });
+  }});
+  res.status(201).json({ message: 'News article created successfully.', news: row });
 });
 
-router.put('/admin/news/:id', requireAdmin, (req: Request, res: Response) => {
+router.put('/admin/news/:id', requireAdmin, async (req: Request, res: Response) => {
   const { title, summary, content, imageUrl, author, status } = req.body;
-  const db = getDb();
-  const item = db.news.find((n) => n.id === req.params.id);
-
-  if (!item) {
-    res.status(404).json({ error: 'News item not found' });
-    return;
-  }
-
-  if (title) item.title = title.trim();
-  if (summary !== undefined) item.summary = summary.trim();
-  if (content) item.content = content.trim();
-  if (imageUrl) item.imageUrl = imageUrl.trim();
-  if (author) item.author = author.trim();
-  if (status) item.status = status;
-  item.updatedAt = new Date().toISOString();
-
-  saveDb(db);
-  res.json({ message: 'News article updated successfully.', news: item });
+  const data: any = {};
+  if (title !== undefined) data.title = String(title).trim();
+  if (summary !== undefined) data.summary = String(summary).trim();
+  if (content !== undefined) data.content = String(content).trim();
+  if (imageUrl !== undefined) data.imageUrl = String(imageUrl).trim();
+  if (author !== undefined) data.author = String(author).trim();
+  if (status !== undefined) data.status = String(status);
+  if (data.title) data.slug = data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + `-${Date.now().toString().slice(-6)}`;
+  const row = await prisma.news.update({ where: { id: req.params.id }, data });
+  res.json({ message: 'News article updated successfully.', news: row });
 });
 
-router.delete('/admin/news/:id', requireAdmin, (req: Request, res: Response) => {
-  const db = getDb();
-  const initialLen = db.news.length;
-  db.news = db.news.filter((n) => n.id !== req.params.id);
-
-  if (db.news.length === initialLen) {
-    res.status(404).json({ error: 'News article not found' });
-    return;
-  }
-
-  saveDb(db);
+router.delete('/admin/news/:id', requireAdmin, async (req: Request, res: Response) => {
+  await prisma.news.delete({ where: { id: req.params.id } });
   res.json({ message: 'News article deleted successfully.' });
 });
 
 // Admin Events CRUD
-router.post('/admin/events', requireAdmin, (req: Request, res: Response) => {
-  const { title, description, date, startTime, endTime, location, imageUrl, status } = req.body;
-
-  if (!title?.trim() || !description?.trim() || !date || !startTime || !location?.trim()) {
-    res.status(400).json({ error: 'Please provide all required event details.' });
-    return;
-  }
-
-  const slug = title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)+/g, '') + `-${Date.now().toString().slice(-4)}`;
-
-  const db = getDb();
-  const newEvent: SchoolEvent = {
-    id: `event-${Date.now()}`,
-    title: title.trim(),
-    slug,
-    description: description.trim(),
-    date,
-    startTime: startTime.trim(),
-    endTime: endTime?.trim() || '',
-    location: location.trim(),
-    imageUrl:
-      imageUrl?.trim() ||
-      'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1000&q=80',
-    status: status || 'Upcoming',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-
-  db.events.unshift(newEvent);
-  saveDb(db);
-
-  res.status(201).json({ message: 'Event created successfully.', event: newEvent });
+router.get('/admin/events', requireAdmin, async (_req: Request, res: Response) => {
+  res.json(await prisma.event.findMany({ orderBy: { createdAt: 'desc' } }));
 });
 
-router.put('/admin/events/:id', requireAdmin, (req: Request, res: Response) => {
+router.post('/admin/events', requireAdmin, async (req: Request, res: Response) => {
   const { title, description, date, startTime, endTime, location, imageUrl, status } = req.body;
-  const db = getDb();
-  const event = db.events.find((e) => e.id === req.params.id);
-
-  if (!event) {
-    res.status(404).json({ error: 'Event not found' });
-    return;
-  }
-
-  if (title) event.title = title.trim();
-  if (description) event.description = description.trim();
-  if (date) event.date = date;
-  if (startTime) event.startTime = startTime.trim();
-  if (endTime !== undefined) event.endTime = endTime.trim();
-  if (location) event.location = location.trim();
-  if (imageUrl) event.imageUrl = imageUrl.trim();
-  if (status) event.status = status;
-  event.updatedAt = new Date().toISOString();
-
-  saveDb(db);
-  res.json({ message: 'Event updated successfully.', event });
+  if (!title?.trim() || !description?.trim() || !date || !startTime || !location?.trim()) return res.status(400).json({ error: 'Please provide all required event details.' });
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + `-${Date.now().toString().slice(-6)}`;
+  const row = await prisma.event.create({ data: {
+    title: title.trim(), slug, description: description.trim(), date: String(date), startTime: String(startTime).trim(),
+    endTime: endTime?.trim() || '', location: location.trim(), imageUrl: imageUrl?.trim() || null,
+    status: status ? String(status) : 'Upcoming',
+  }});
+  res.status(201).json({ message: 'Event created successfully.', event: row });
 });
 
-router.delete('/admin/events/:id', requireAdmin, (req: Request, res: Response) => {
-  const db = getDb();
-  const initialLen = db.events.length;
-  db.events = db.events.filter((e) => e.id !== req.params.id);
+router.put('/admin/events/:id', requireAdmin, async (req: Request, res: Response) => {
+  const { title, description, date, startTime, endTime, location, imageUrl, status } = req.body;
+  const data: any = {};
+  if (title !== undefined) data.title = String(title).trim();
+  if (description !== undefined) data.description = String(description).trim();
+  if (date !== undefined) data.date = String(date);
+  if (startTime !== undefined) data.startTime = String(startTime).trim();
+  if (endTime !== undefined) data.endTime = String(endTime).trim();
+  if (location !== undefined) data.location = String(location).trim();
+  if (imageUrl !== undefined) data.imageUrl = imageUrl ? String(imageUrl).trim() : null;
+  if (status !== undefined) data.status = String(status);
+  if (data.title) data.slug = data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') + `-${Date.now().toString().slice(-6)}`;
+  const row = await prisma.event.update({ where: { id: req.params.id }, data });
+  res.json({ message: 'Event updated successfully.', event: row });
+});
 
-  if (db.events.length === initialLen) {
-    res.status(404).json({ error: 'Event not found' });
-    return;
-  }
-
-  saveDb(db);
+router.delete('/admin/events/:id', requireAdmin, async (req: Request, res: Response) => {
+  await prisma.event.delete({ where: { id: req.params.id } });
   res.json({ message: 'Event deleted successfully.' });
 });
 
 // Admin Gallery CRUD
-router.post('/admin/gallery', requireAdmin, (req: Request, res: Response) => {
-  const { title, description, imageUrl, category } = req.body;
-
-  if (!title?.trim() || !imageUrl?.trim() || !category) {
-    res.status(400).json({ error: 'Title, category, and image URL are required.' });
-    return;
-  }
-
-  const db = getDb();
-  const newImg: GalleryImage = {
-    id: `gal-${Date.now()}`,
-    title: title.trim(),
-    description: description?.trim() || '',
-    imageUrl: imageUrl.trim(),
-    category,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-
-  db.gallery.unshift(newImg);
-  saveDb(db);
-
-  res.status(201).json({ message: 'Image added to gallery.', image: newImg });
+router.get('/admin/gallery', requireAdmin, async (_req: Request, res: Response) => {
+  res.json(await prisma.galleryImage.findMany({ orderBy: { createdAt: 'desc' } }));
 });
 
-router.delete('/admin/gallery/:id', requireAdmin, (req: Request, res: Response) => {
-  const db = getDb();
-  const initialLen = db.gallery.length;
-  db.gallery = db.gallery.filter((g) => g.id !== req.params.id);
+router.post('/admin/gallery', requireAdmin, async (req: Request, res: Response) => {
+  const { title, description, imageUrl, category } = req.body;
+  if (!title?.trim() || !imageUrl?.trim() || !category) return res.status(400).json({ error: 'Title, category, and image URL are required.' });
+  const row = await prisma.galleryImage.create({ data: {
+    title: title.trim(), description: description?.trim() || null, imageUrl: imageUrl.trim(), category: String(category),
+  }});
+  res.status(201).json({ message: 'Image added to gallery.', image: row });
+});
 
-  if (db.gallery.length === initialLen) {
-    res.status(404).json({ error: 'Image not found' });
-    return;
-  }
-
-  saveDb(db);
+router.delete('/admin/gallery/:id', requireAdmin, async (req: Request, res: Response) => {
+  await prisma.galleryImage.delete({ where: { id: req.params.id } });
   res.json({ message: 'Image removed from gallery successfully.' });
 });
 
 // Admin Messages
-router.get('/admin/messages', requireAdmin, (req: Request, res: Response) => {
-  const db = getDb();
-  res.json(db.messages);
+router.get('/admin/messages', requireAdmin, async (_req: Request, res: Response) => {
+  res.json(await prisma.contactMessage.findMany({ orderBy: { createdAt: 'desc' } }));
 });
 
-router.patch('/admin/messages/:id/read', requireAdmin, (req: Request, res: Response) => {
-  const { isRead } = req.body;
-  const db = getDb();
-  const msg = db.messages.find((m) => m.id === req.params.id);
-
-  if (!msg) {
-    res.status(404).json({ error: 'Message not found' });
-    return;
-  }
-
-  msg.isRead = isRead !== undefined ? isRead : true;
-  msg.updatedAt = new Date().toISOString();
-  saveDb(db);
-
-  res.json({ message: 'Message status updated.', messageItem: msg });
+router.patch('/admin/messages/:id/read', requireAdmin, async (req: Request, res: Response) => {
+  const row = await prisma.contactMessage.update({ where: { id: req.params.id }, data: { isRead: req.body.isRead !== undefined ? Boolean(req.body.isRead) : true } });
+  res.json({ message: 'Message status updated.', messageItem: row });
 });
 
-router.delete('/admin/messages/:id', requireAdmin, (req: Request, res: Response) => {
-  const db = getDb();
-  const initialLen = db.messages.length;
-  db.messages = db.messages.filter((m) => m.id !== req.params.id);
-
-  if (db.messages.length === initialLen) {
-    res.status(404).json({ error: 'Message not found' });
-    return;
-  }
-
-  saveDb(db);
+router.delete('/admin/messages/:id', requireAdmin, async (req: Request, res: Response) => {
+  await prisma.contactMessage.delete({ where: { id: req.params.id } });
   res.json({ message: 'Message deleted successfully.' });
 });
 
 // Admin School Settings
-router.put('/admin/settings', requireAdmin, (req: Request, res: Response) => {
-  const updates = req.body;
-  const db = getDb();
-
-  db.settings = {
-    ...db.settings,
-    ...updates,
-    updatedAt: new Date().toISOString(),
-  };
-
-  saveDb(db);
-  res.json({ message: 'School settings updated successfully.', settings: db.settings });
+router.put('/admin/settings', requireAdmin, async (req: Request, res: Response) => {
+  const allowed = ['schoolName','slogan','logoUrl','phone','email','address','mapsUrl','latitude','longitude','facebookUrl','telegramUrl','youtubeUrl','mission','vision','about','principalName','principalMessage','principalPhotoUrl'];
+  const updates: any = {};
+  for (const key of allowed) if (req.body[key] !== undefined) updates[key] = req.body[key];
+  const settings = await prisma.schoolSettings.upsert({
+    where: { id: 'default' },
+    update: updates,
+    create: { id: 'default', ...updates, mission: String(updates.mission || ''), vision: String(updates.vision || ''), about: String(updates.about || '') },
+  });
+  res.json({ message: 'School settings updated successfully.', settings });
 });
 
 // ==========================================
+// PORTAL AUTHENTICATION// ==========================================
 // PORTAL AUTHENTICATION (TEACHER & PARENT)
 // ==========================================
 
