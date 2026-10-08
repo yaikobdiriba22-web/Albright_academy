@@ -12,6 +12,8 @@ const grade = (marks:number, max:number) => {
   if(p>=90)return'A+'; if(p>=80)return'A'; if(p>=70)return'B'; if(p>=60)return'C'; if(p>=50)return'D'; return'F';
 };
 
+router.post('/attendances',requireRoles(ADMIN,'TEACHER' as any),async(req,res)=>{if(!Array.isArray(req.body.items))return res.status(400).json({error:'Array of attendance marks is required'});const saved=[];for(const item of req.body.items){if(!item.studentId||!item.date||!item.status)continue;const d=day(String(item.date));saved.push(await prisma.attendance.upsert({where:{studentId_date:{studentId:String(item.studentId),date:d}},update:{status:String(item.status),remarks:item.remarks||null},create:{studentId:String(item.studentId),date:d,status:String(item.status),remarks:item.remarks||null}}));}res.json({success:true,count:saved.length,records:saved});});
+
 router.get('/attendance', async (req: AuthenticatedRequest,res) => {
   const user=req.authUser!;
   const where:any={};
@@ -41,9 +43,10 @@ router.get('/assignments',async(req:AuthenticatedRequest,res)=>{
 });
 
 router.post('/assignments',requireRoles(ADMIN,'TEACHER' as any),async(req,res)=>{
-  const {subjectId,teacherId,title,description,dueDate}=req.body;
-  if(!subjectId||!teacherId||!title||!description||!dueDate)return res.status(400).json({error:'Subject, teacher, title, description and due date are required'});
-  const row=await prisma.assignment.create({data:{subjectId:String(subjectId),teacherId:String(teacherId),title:String(title).trim(),description:String(description).trim(),dueDate:new Date(dueDate)},include:{subject:true,teacher:true}});
+  const {subjectId,title,description,dueDate}=req.body;
+  const teacherId = req.authUser!.role === 'TEACHER' ? req.authUser!.teacherId : req.body.teacherId;
+  if(!subjectId||!teacherId||!title||!dueDate)return res.status(400).json({error:'Subject, teacher, title, description and due date are required'});
+  const row=await prisma.assignment.create({data:{subjectId:String(subjectId),teacherId:String(teacherId),title:String(title).trim(),description:String(description || '').trim(),dueDate:new Date(dueDate)},include:{subject:true,teacher:true}});
   res.status(201).json(row);
 });
 
@@ -52,6 +55,8 @@ router.put('/assignments/:id',requireRoles(ADMIN,'TEACHER' as any),async(req,res
   const row=await prisma.assignment.update({where:{id:req.params.id},data:{...(title!==undefined?{title:String(title).trim()}:{}),...(description!==undefined?{description:String(description).trim()}:{}),...(dueDate!==undefined?{dueDate:new Date(dueDate)}:{})}});
   res.json(row);
 });
+
+router.delete('/assignments/:id',requireRoles(ADMIN,'TEACHER' as any),async(req,res)=>{const row=await prisma.assignment.findUnique({where:{id:req.params.id}});if(!row)return res.status(404).json({error:'Assignment not found'});if(req.authUser!.role==='TEACHER'&&row.teacherId!==req.authUser!.teacherId)return res.status(403).json({error:'Forbidden'});await prisma.assignment.delete({where:{id:req.params.id}});res.json({success:true,message:'Assignment deleted'});});
 
 router.get('/exams',async(req,res)=>{
   const where:any={};
@@ -77,6 +82,8 @@ router.post('/exams/:examId/results',requireRoles(ADMIN,'TEACHER' as any),async(
   const row=await prisma.examResult.upsert({where:{examId_studentId:{examId:exam.id,studentId:String(studentId)}},update:{marksObtained:marks,grade:grade(marks,exam.maxMarks),remarks:remarks||null},create:{examId:exam.id,studentId:String(studentId),marksObtained:marks,grade:grade(marks,exam.maxMarks),remarks:remarks||null}},include:{student:true,exam:true}});
   res.status(201).json(row);
 });
+
+router.post('/results',requireRoles(ADMIN,'TEACHER' as any),async(req,res)=>{const {examId,studentId,marksObtained,remarks}=req.body;if(!examId||!studentId)return res.status(400).json({error:'Exam and student are required'});const exam=await prisma.exam.findUnique({where:{id:String(examId)}});if(!exam)return res.status(404).json({error:'Exam not found'});const marks=Number(marksObtained);if(!Number.isFinite(marks)||marks<0||marks>exam.maxMarks)return res.status(400).json({error:'Valid marks within exam maximum are required'});const row=await prisma.examResult.upsert({where:{examId_studentId:{examId:exam.id,studentId:String(studentId)}},update:{marksObtained:marks,grade:grade(marks,exam.maxMarks),remarks:remarks||null},create:{examId:exam.id,studentId:String(studentId),marksObtained:marks,grade:grade(marks,exam.maxMarks),remarks:remarks||null},include:{student:true,exam:true}});res.status(201).json(row);});
 
 router.get('/results',async(req:AuthenticatedRequest,res)=>{
   const where:any={};
