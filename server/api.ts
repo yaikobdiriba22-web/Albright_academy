@@ -1,6 +1,5 @@
 import { Router, Request, Response } from 'express';
 import { GoogleGenAI } from '@google/genai';
-import { getDb, saveDb, generateReferenceNumber } from './db.ts';
 import { prisma } from './prisma.ts';
 import {
   generateToken,
