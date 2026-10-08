@@ -164,7 +164,7 @@ router.post('/students', requireRoles(ADMIN), async (req, res) => {
         parentId: parentId || null,
       },
     });
-    await tx.enrollment.create({ data: { studentId: created.id, academicYearId: academicYear.id, classId: String(classId), sectionId: String(sectionId || ''), status: 'Active' } });
+    await tx.enrollment.create({ data: { studentId: created.id, academicYearId: academicYear.id, classId: String(classId), sectionId: String(sectionId), status: 'Active' } });
     return tx.student.findUnique({ where: { id: created.id }, include: { parent: true, enrollments: { include: { class: true, section: true }, take: 1 } } });
   });
   res.status(201).json(safeStudent(student));
@@ -228,6 +228,27 @@ router.put('/parents/:id', requireRoles(ADMIN), async (req, res) => {
     ...(occupation !== undefined ? { occupation: occupation || null } : {}),
   }});
   res.json(parent);
+});
+
+
+router.delete('/subjects/:id', requireRoles(ADMIN), async (req, res) => {
+  const used = (await prisma.assignment.count({ where: { subjectId: req.params.id } })) +
+    (await prisma.exam.count({ where: { subjectId: req.params.id } }));
+  if (used) return res.status(409).json({ error: 'Cannot delete a subject used by assignments or exams.' });
+  await prisma.subject.delete({ where: { id: req.params.id } });
+  res.json({ success: true, message: 'Subject removed' });
+});
+
+router.get('/teachers', async (req: AuthenticatedRequest, res: Response) => {
+  const where: any = req.authUser!.role === 'TEACHER'
+    ? { id: req.authUser!.teacherId || '__none__' }
+    : undefined;
+  const rows = await prisma.teacher.findMany({
+    where,
+    include: { subjects: true },
+    orderBy: { fullName: 'asc' },
+  });
+  res.json(rows.map(t => ({ ...t, assignedSubjects: t.subjects, assignedClasses: [] })));
 });
 
 export default router;
